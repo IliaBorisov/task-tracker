@@ -56,6 +56,30 @@ async function setDatabasePath(databasePath) {
   });
 }
 
+function createDatabaseReadError(databasePath, reason) {
+  return new Error(`${path.basename(databasePath)} is not a valid Task Tracker database: ${reason}`);
+}
+
+function parseTasksDatabase(fileContents, databasePath) {
+  let savedTasks;
+
+  try {
+    savedTasks = JSON.parse(fileContents);
+  } catch {
+    throw createDatabaseReadError(databasePath, 'the file is not valid JSON');
+  }
+
+  if (Array.isArray(savedTasks)) {
+    return savedTasks;
+  }
+
+  if (savedTasks && typeof savedTasks === 'object' && Array.isArray(savedTasks.tasks)) {
+    return savedTasks.tasks;
+  }
+
+  throw createDatabaseReadError(databasePath, 'expected a task list array');
+}
+
 async function readTasksFromPath(databasePath) {
   await fs.mkdir(path.dirname(databasePath), { recursive: true });
 
@@ -68,9 +92,7 @@ async function readTasksFromPath(databasePath) {
       return [];
     }
 
-    const savedTasks = JSON.parse(fileContents);
-
-    return Array.isArray(savedTasks) ? savedTasks : [];
+    return parseTasksDatabase(fileContents, databasePath);
   } catch (error) {
     if (error.code === 'ENOENT') {
       await writeTasksToPath(databasePath, []);
@@ -78,7 +100,7 @@ async function readTasksFromPath(databasePath) {
     }
 
     console.error('Failed to read tasks database:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -120,12 +142,14 @@ async function chooseDatabaseFile(browserWindow) {
   }
 
   const databasePath = result.filePaths[0];
+  const tasks = await readTasksFromPath(databasePath);
+
   await setDatabasePath(databasePath);
 
   return {
     canceled: false,
     databasePath,
-    tasks: await readTasksFromPath(databasePath),
+    tasks,
   };
 }
 

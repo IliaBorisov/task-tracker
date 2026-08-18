@@ -3,6 +3,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
 const projectRoot = path.resolve(__dirname, '..');
+const releasePath = path.join(projectRoot, 'release');
 const releaseNumberPath = path.join(projectRoot, 'build', 'release-number.txt');
 const isWindows = process.platform === 'win32';
 
@@ -36,11 +37,17 @@ function run(command, args, releaseNumber) {
   }
 }
 
+function cleanReleaseDirectory() {
+  fs.rmSync(releasePath, { force: true, recursive: true });
+  fs.mkdirSync(releasePath, { recursive: true });
+}
+
 const nextReleaseNumber = readCurrentReleaseNumber() + 1;
 
 console.log(`Building Windows release ${nextReleaseNumber}`);
 
 run('npm', ['run', 'build'], nextReleaseNumber);
+cleanReleaseDirectory();
 run('electron-builder', ['--win', '--x64'], nextReleaseNumber);
 
 fs.mkdirSync(path.dirname(releaseNumberPath), { recursive: true });

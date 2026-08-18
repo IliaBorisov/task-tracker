@@ -52,6 +52,16 @@ function normalizeTasks(tasks) {
     .filter((task) => task.projectNumber || task.projectName || task.description);
 }
 
+function getDatabaseErrorMessage(error, fallbackMessage) {
+  if (!error?.message) {
+    return fallbackMessage;
+  }
+
+  return String(error.message)
+    .replace(/^Error invoking remote method '[^']+':\s*/, '')
+    .replace(/^Error:\s*/, '');
+}
+
 function App() {
   const shouldSkipNextSave = useRef(true);
   const [tasks, setTasks] = useState([]);
@@ -84,9 +94,9 @@ function App() {
           setDatabasePath(savedDatabasePath);
           setDatabaseError('');
         }
-      } catch {
+      } catch (error) {
         if (!isCanceled) {
-          setDatabaseError('Could not read tasks.json');
+          setDatabaseError(getDatabaseErrorMessage(error, 'Could not read tasks.json'));
         }
       } finally {
         if (!isCanceled) {
@@ -121,9 +131,9 @@ function App() {
         if (!isCanceled) {
           setDatabaseError('');
         }
-      } catch {
+      } catch (error) {
         if (!isCanceled) {
-          setDatabaseError('Could not save tasks.json');
+          setDatabaseError(getDatabaseErrorMessage(error, 'Could not save tasks.json'));
         }
       }
     }
@@ -175,8 +185,8 @@ function App() {
       setDatabasePath(result.databasePath);
       setDatabaseError('');
       setSelectedProjectNumber(null);
-    } catch {
-      setDatabaseError('Could not open selected database');
+    } catch (error) {
+      setDatabaseError(getDatabaseErrorMessage(error, 'Could not open selected database'));
     }
   }
 
