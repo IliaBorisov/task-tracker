@@ -3,6 +3,8 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 
 const isDev = !app.isPackaged;
+let mainWindow = null;
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
 function getDefaultDatabasePath() {
   return path.join(app.getPath('userData'), 'tasks.json');
@@ -136,13 +138,25 @@ function registerTaskDatabaseHandlers() {
   });
 }
 
+function focusMainWindow() {
+  if (!mainWindow) {
+    return;
+  }
+
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+
+  mainWindow.focus();
+}
+
 function createWindow() {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1040,
     height: 720,
     minWidth: 760,
     minHeight: 540,
-    title: 'Taks Tracker',
+    title: 'Task Tracker',
     backgroundColor: '#f5f1e8',
     webPreferences: {
       contextIsolation: true,
@@ -161,21 +175,31 @@ function createWindow() {
     shell.openExternal(url);
     return { action: 'deny' };
   });
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
 }
 
-app.whenReady().then(() => {
-  registerTaskDatabaseHandlers();
-  createWindow();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', focusMainWindow);
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+  app.whenReady().then(() => {
+    registerTaskDatabaseHandlers();
+    createWindow();
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      }
+    });
+  });
+
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit();
     }
   });
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+}

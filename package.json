@@ -1,5 +1,5 @@
 {
-  "name": "taks-tracker",
+  "name": "task-tracker",
   "version": "0.1.0",
   "private": true,
   "description": "A simple React and Electron task tracker.",
@@ -7,12 +7,12 @@
   "scripts": {
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on tcp:5173 && VITE_DEV_SERVER_URL=http://localhost:5173 electron .\"",
     "build": "vite build",
-    "dist:win": "npm run build && electron-builder --win --x64",
+    "dist:win": "node scripts/dist-win.cjs",
     "start": "electron ."
   },
   "build": {
-    "appId": "com.takstracker.app",
-    "productName": "Taks Tracker",
+    "appId": "com.tasktracker.app",
+    "productName": "Task Tracker",
     "directories": {
       "output": "release"
     },
@@ -28,12 +28,13 @@
       ]
     },
     "nsis": {
-      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}",
+      "guid": "4d887ba5-f89a-5609-95eb-1d872e27e174",
+      "artifactName": "${productName}-Setup-${env.RELEASE_NUMBER}-${arch}.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     },
     "portable": {
-      "artifactName": "${productName}-Portable-${version}-${arch}.${ext}"
+      "artifactName": "${productName}-Portable-${env.RELEASE_NUMBER}-${arch}.${ext}"
     }
   },
   "dependencies": {

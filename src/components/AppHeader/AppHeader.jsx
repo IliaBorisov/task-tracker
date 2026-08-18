@@ -6,7 +6,7 @@ function AppHeader({ taskCount }) {
       <div>
         <p className={styles.eyebrow}>Desktop task list</p>
         <h1 className={styles.title} id="app-title">
-          Taks Tracker
+          Task Tracker
         </h1>
       </div>
       <div className={styles.taskCount} aria-label={`${taskCount} tasks`}>

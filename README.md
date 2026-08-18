@@ -1,4 +1,4 @@
-# Taks Tracker
+# Task Tracker
 
 A simple React and Electron desktop app for tracking project tasks in a table.
 
@@ -18,3 +18,11 @@ npm run dev
 npm run build
 npm start
 ```
+
+## Windows Release
+
+```bash
+npm run dist:win
+```
+
+The Windows release number is stored in `build/release-number.txt` and increases by 1 after each successful Windows build.

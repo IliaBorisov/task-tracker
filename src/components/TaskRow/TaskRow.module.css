@@ -97,6 +97,11 @@
   padding: 0 8px;
 }
 
+.statusSelect option {
+  background: var(--color-table-header);
+  color: var(--color-text);
+}
+
 .notStarted {
   background: #ffd7e2;
   color: #8d0f2e;
