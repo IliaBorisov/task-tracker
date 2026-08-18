@@ -1,4 +1,5 @@
 import { TASK_STATUS, TASK_STATUS_OPTIONS, normalizeTaskStatus } from '../../constants/taskStatus.js';
+import noteIcon from '../../assets/note.svg';
 import styles from './TaskRow.module.css';
 
 function getStatusStyle(status) {
@@ -59,7 +60,12 @@ function TaskRow({
       </td>
       <td>
         <span>{task.description}</span>
-        {task.note ? <p className={styles.taskNote}>{task.note}</p> : null}
+        {task.note ? (
+          <p className={styles.taskNote}>
+            <img className={styles.noteIcon} src={noteIcon} alt="" aria-hidden="true" />
+            <span className={styles.noteText}>{task.note}</span>
+          </p>
+        ) : null}
       </td>
       <td className={styles.statusCell}>
         <select

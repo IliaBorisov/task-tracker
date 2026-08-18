@@ -1,6 +1,6 @@
 tr.weekRow td {
-  background: #e2e8f0;
-  color: #1f2937;
+  background: var(--color-table-header);
+  color: var(--color-table-header-text);
   padding: 5px 12px;
 }
 
@@ -17,7 +17,7 @@ tr.weekRow td {
 }
 
 .weekHeader small {
-  color: #475569;
+  color: var(--color-table-header-text);
   font-size: 0.76rem;
   font-weight: 800;
 }

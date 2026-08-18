@@ -20,16 +20,17 @@ function ProjectTasksPage({
         </button>
 
         <div className={styles.projectInfo}>
-          <p className={styles.eyebrow}>Project</p>
           <h2 className={styles.projectTitle} id="project-page-title">
-            {projectNumber}
+            <span>{projectNumber}</span>
+            {projectName ? (
+              <>
+                <span className={styles.projectSeparator} aria-hidden="true">
+                  •
+                </span>
+                <span>{projectName}</span>
+              </>
+            ) : null}
           </h2>
-          {projectName ? <p className={styles.projectName}>{projectName}</p> : null}
-        </div>
-
-        <div className={styles.taskCount} aria-label={`${tasks.length} project tasks`}>
-          <span>{tasks.length}</span>
-          <small>{tasks.length === 1 ? 'task' : 'tasks'}</small>
         </div>
       </div>
 

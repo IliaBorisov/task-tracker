@@ -1,11 +1,10 @@
 .tablePanel {
   display: flex;
-  max-height: calc(100vh - 178px);
+  max-height: calc(100vh - 154px);
   flex-direction: column;
   border: 1px solid var(--color-border-strong);
   border-radius: 8px;
   background: var(--color-surface);
-  box-shadow: var(--shadow-panel);
   overflow: hidden;
 }
 
@@ -37,12 +36,18 @@
   position: sticky;
   top: 0;
   z-index: 3;
+  border-right: 1px solid var(--color-table-header-border);
+  border-bottom-color: var(--color-table-header-border);
   background: var(--color-table-header);
-  color: var(--color-text-muted);
+  color: var(--color-table-header-text);
   font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0;
   text-transform: uppercase;
+}
+
+.table th:last-child {
+  border-right: 0;
 }
 
 .headerCell {
@@ -102,7 +107,7 @@
 }
 
 .resizeHandle:focus-visible {
-  outline: 2px solid rgba(47, 124, 246, 0.22);
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: -2px;
 }
 
@@ -175,7 +180,7 @@
 
 @media (max-width: 760px) {
   .tablePanel {
-    max-height: calc(100vh - 280px);
+    max-height: calc(100vh - 252px);
   }
 
   .databaseFooter {

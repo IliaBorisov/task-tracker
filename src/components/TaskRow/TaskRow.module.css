@@ -7,15 +7,15 @@
 }
 
 .rowNotStarted {
-  --row-status-accent: #ff8fa3;
+  --row-status-accent: #ff4f75;
 }
 
 .rowInProgress {
-  --row-status-accent: #ffc44d;
+  --row-status-accent: #ffb000;
 }
 
 .rowComplete {
-  --row-status-accent: #6bea66;
+  --row-status-accent: #35d75f;
 }
 
 .numberCell {
@@ -48,16 +48,18 @@
 
 .projectNumberButton:hover {
   color: var(--color-primary-hover);
-  text-decoration: underline;
 }
 
 .projectNumberButton:focus-visible {
   border-radius: 4px;
-  outline: 2px solid rgba(47, 124, 246, 0.22);
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 
 .taskNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
   margin: 3px 0 0;
   color: var(--color-text-muted);
   font-size: 0.76rem;
@@ -65,10 +67,15 @@
   line-height: 1.25;
 }
 
-.taskNote::before {
-  color: var(--color-text-soft);
-  content: "Note: ";
-  font-weight: 400;
+.noteIcon {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  margin-top: 1px;
+}
+
+.noteText {
+  min-width: 0;
 }
 
 .statusCell.statusCell {
@@ -87,26 +94,20 @@
   box-shadow: none;
   font-size: 0.76rem;
   font-weight: 900;
-  padding: 0 8px 0 18px;
+  padding: 0 8px;
 }
 
 .notStarted {
-  background:
-    radial-gradient(circle at 12px 50%, #8a1429 0 2px, transparent 2.5px),
-    #f8dce3;
-  color: #8a1429;
+  background: #ffd7e2;
+  color: #8d0f2e;
 }
 
 .inProgress {
-  background:
-    radial-gradient(circle at 12px 50%, #7b4a00 0 2px, transparent 2.5px),
-    #ffe4aa;
-  color: #7b4a00;
+  background: #ffdf88;
+  color: #744400;
 }
 
 .complete {
-  background:
-    radial-gradient(circle at 12px 50%, #063f3e 0 2px, transparent 2.5px),
-    #c8ffc4;
-  color: #063f3e;
+  background: #caffd2;
+  color: #075927;
 }
