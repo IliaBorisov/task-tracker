@@ -1,0 +1,112 @@
+.taskRow {
+  --row-status-accent: var(--color-border-strong);
+}
+
+.taskRow:hover td {
+  background: var(--color-row-hover);
+}
+
+.rowNotStarted {
+  --row-status-accent: #ff8fa3;
+}
+
+.rowInProgress {
+  --row-status-accent: #ffc44d;
+}
+
+.rowComplete {
+  --row-status-accent: #6bea66;
+}
+
+.numberCell {
+  box-shadow: inset 4px 0 0 var(--row-status-accent);
+  color: var(--color-text-soft);
+  font-weight: 900;
+  text-align: center;
+}
+
+.projectName {
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.projectNumber {
+  color: var(--color-primary);
+  font-weight: 900;
+}
+
+.projectNumberButton {
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+  padding: 0;
+  text-align: left;
+}
+
+.projectNumberButton:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.projectNumberButton:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid rgba(47, 124, 246, 0.22);
+  outline-offset: 2px;
+}
+
+.taskNote {
+  margin: 3px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.taskNote::before {
+  color: var(--color-text-soft);
+  content: "Note: ";
+  font-weight: 400;
+}
+
+.statusCell.statusCell {
+  width: 120px;
+  max-width: 120px;
+  padding-left: 4px;
+}
+
+.statusSelect {
+  width: 100%;
+  max-width: 120px;
+  height: 28px;
+  min-width: 0;
+  border: 0;
+  border-radius: 8px;
+  box-shadow: none;
+  font-size: 0.76rem;
+  font-weight: 900;
+  padding: 0 8px 0 18px;
+}
+
+.notStarted {
+  background:
+    radial-gradient(circle at 12px 50%, #8a1429 0 2px, transparent 2.5px),
+    #f8dce3;
+  color: #8a1429;
+}
+
+.inProgress {
+  background:
+    radial-gradient(circle at 12px 50%, #7b4a00 0 2px, transparent 2.5px),
+    #ffe4aa;
+  color: #7b4a00;
+}
+
+.complete {
+  background:
+    radial-gradient(circle at 12px 50%, #063f3e 0 2px, transparent 2.5px),
+    #c8ffc4;
+  color: #063f3e;
+}

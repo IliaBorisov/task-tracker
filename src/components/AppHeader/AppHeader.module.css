@@ -1,0 +1,66 @@
+.appHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--color-primary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 2.7rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.taskCount {
+  display: inline-flex;
+  min-width: 112px;
+  height: 58px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.taskCount span {
+  color: var(--color-primary);
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.taskCount small {
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .appHeader {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .taskCount {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0 16px;
+  }
+}

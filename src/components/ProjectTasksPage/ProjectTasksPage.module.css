@@ -1,0 +1,110 @@
+.projectPage {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.projectHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.backButton {
+  display: inline-flex;
+  width: fit-content;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 7px;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 900;
+  padding: 0 10px;
+}
+
+.backButton:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.backButton:focus-visible {
+  outline: 2px solid rgba(47, 124, 246, 0.22);
+  outline-offset: 2px;
+}
+
+.projectInfo {
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--color-primary);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.projectTitle {
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 1.45rem;
+  line-height: 1.12;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectName {
+  margin: 4px 0 0;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taskCount {
+  display: inline-flex;
+  min-width: 96px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.taskCount span {
+  color: var(--color-primary);
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.taskCount small {
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .projectHeader {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .taskCount {
+    justify-content: flex-start;
+    padding: 0 12px;
+  }
+}

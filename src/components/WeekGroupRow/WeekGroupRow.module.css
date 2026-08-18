@@ -1,0 +1,31 @@
+tr.weekRow td {
+  background: #e2e8f0;
+  color: #1f2937;
+  padding: 5px 12px;
+}
+
+.weekHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.weekHeader span {
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.weekHeader small {
+  color: #475569;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .weekHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+}

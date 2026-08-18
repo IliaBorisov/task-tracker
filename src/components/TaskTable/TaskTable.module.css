@@ -1,0 +1,189 @@
+.tablePanel {
+  display: flex;
+  max-height: calc(100vh - 178px);
+  flex-direction: column;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+}
+
+.tableScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.table {
+  width: var(--table-width);
+  min-width: var(--table-width);
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid var(--color-border);
+  padding: 5px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--color-table-header);
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.headerCell {
+  position: relative;
+  user-select: none;
+}
+
+.centerHeader {
+  text-align: center;
+}
+
+.fixedWidthColumn.fixedWidthColumn {
+  max-width: 120px;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.headerLabel {
+  display: block;
+  overflow: hidden;
+  padding-right: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  z-index: 2;
+  width: 9px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+  padding: 0;
+}
+
+.resizeHandle:disabled {
+  display: none;
+}
+
+.resizeHandle::after {
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  left: 4px;
+  width: 2px;
+  border-radius: 999px;
+  background: transparent;
+  content: "";
+}
+
+.resizeHandle:hover::after,
+.resizeHandle:focus-visible::after {
+  background: var(--color-primary);
+}
+
+.resizeHandle:focus-visible {
+  outline: 2px solid rgba(47, 124, 246, 0.22);
+  outline-offset: -2px;
+}
+
+.table td {
+  color: var(--color-text);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.emptyState {
+  height: 132px;
+  color: var(--color-text-muted);
+  font-weight: 800;
+  text-align: center;
+}
+
+.databaseFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--color-border);
+  padding: 7px 10px 7px 14px;
+}
+
+.databasePath {
+  min-width: 0;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.databaseButton {
+  flex: 0 0 auto;
+  height: 30px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 7px;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0 10px;
+}
+
+.databaseButton:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.tableFooter {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 7px 12px;
+}
+
+@media (max-width: 760px) {
+  .tablePanel {
+    max-height: calc(100vh - 280px);
+  }
+
+  .databaseFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .databaseButton {
+    width: 100%;
+  }
+}

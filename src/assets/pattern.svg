@@ -1,0 +1,5 @@
+<svg width="3000" height="3000" viewBox="0 0 3000 3000" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagonal Dots dot pattern">
+  <rect width="3000" height="3000" fill="#f5f5f5"/>
+  <defs><pattern id="svgdot-pattern" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><circle cx="8" cy="8" r="1" fill="#696969" fill-opacity="0.35"/></pattern></defs>
+  <rect width="3000" height="3000" fill="url(#svgdot-pattern)"/>
+</svg>
