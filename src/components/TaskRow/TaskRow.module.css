@@ -14,6 +14,10 @@
   --row-status-accent: #ffb000;
 }
 
+.rowInReview {
+  --row-status-accent: #8b5cf6;
+}
+
 .rowComplete {
   --row-status-accent: #35d75f;
 }
@@ -110,6 +114,11 @@
 .inProgress {
   background: #ffdf88;
   color: #744400;
+}
+
+.inReview {
+  background: #e9ddff;
+  color: #5b21a6;
 }
 
 .complete {

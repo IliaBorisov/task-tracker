@@ -7,6 +7,10 @@ function getStatusStyle(status) {
     return styles.inProgress;
   }
 
+  if (status === TASK_STATUS.IN_REVIEW) {
+    return styles.inReview;
+  }
+
   if (status === TASK_STATUS.COMPLETE) {
     return styles.complete;
   }
@@ -17,6 +21,10 @@ function getStatusStyle(status) {
 function getRowStatusStyle(status) {
   if (status === TASK_STATUS.IN_PROGRESS) {
     return styles.rowInProgress;
+  }
+
+  if (status === TASK_STATUS.IN_REVIEW) {
+    return styles.rowInReview;
   }
 
   if (status === TASK_STATUS.COMPLETE) {
