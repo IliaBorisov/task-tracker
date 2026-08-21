@@ -55,7 +55,7 @@
 }
 
 .projectNumberButton:focus-visible {
-  border-radius: 4px;
+  border-radius: var(--radius-control);
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
@@ -94,7 +94,7 @@
   height: 28px;
   min-width: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   box-shadow: none;
   font-size: 0.76rem;
   font-weight: 900;

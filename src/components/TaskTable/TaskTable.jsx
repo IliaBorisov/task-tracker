@@ -1,3 +1,4 @@
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog.jsx';
 import EditTaskDialog from '../EditTaskDialog/EditTaskDialog.jsx';
@@ -126,6 +127,7 @@ function TaskTable({
   onChooseDatabase,
   onDeleteTask,
   onUpdateTask,
+  emptyMessage = 'No tasks yet',
   showDatabaseFooter = true,
   tableLabel = 'Task table',
 }) {
@@ -135,6 +137,7 @@ function TaskTable({
   const [pendingDeleteTask, setPendingDeleteTask] = useState(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [columnWidths, setColumnWidths] = useState(createDefaultColumnWidths);
+  const [collapsedWeekStarts, setCollapsedWeekStarts] = useState(() => new Set());
   const groupedTasks = useMemo(() => groupTasksByWeek(tasks), [tasks]);
   const minimumTableWidth = useMemo(getMinimumTableWidth, []);
   const columnWidthTotal = useMemo(
@@ -153,6 +156,10 @@ function TaskTable({
   const weekCountLabel = `${groupedTasks.length} ${
     groupedTasks.length === 1 ? 'week' : 'weeks'
   }`;
+  const hasWeekGroups = groupedTasks.length > 0;
+  const areAllWeeksCollapsed =
+    hasWeekGroups && groupedTasks.every((group) => collapsedWeekStarts.has(group.weekStart));
+  const weekToggleLabel = areAllWeeksCollapsed ? 'Expand all' : 'Collapse all';
 
   useEffect(() => {
     const tableScrollElement = tableScrollRef.current;
@@ -267,6 +274,30 @@ function TaskTable({
     onUpdateTask(taskId, { status });
   }
 
+  function handleToggleWeekGroup(weekStart) {
+    setCollapsedWeekStarts((currentCollapsedWeekStarts) => {
+      const nextCollapsedWeekStarts = new Set(currentCollapsedWeekStarts);
+
+      if (nextCollapsedWeekStarts.has(weekStart)) {
+        nextCollapsedWeekStarts.delete(weekStart);
+      } else {
+        nextCollapsedWeekStarts.add(weekStart);
+      }
+
+      return nextCollapsedWeekStarts;
+    });
+  }
+
+  function handleToggleAllWeekGroups() {
+    if (!hasWeekGroups) {
+      return;
+    }
+
+    setCollapsedWeekStarts(
+      areAllWeeksCollapsed ? new Set() : new Set(groupedTasks.map((group) => group.weekStart)),
+    );
+  }
+
   function handleOpenContextMenu(task, event) {
     event.preventDefault();
 
@@ -373,25 +404,37 @@ function TaskTable({
               ) : tasks.length === 0 ? (
                 <tr>
                   <td className={styles.emptyState} colSpan="5">
-                    No tasks yet
+                    {emptyMessage}
                   </td>
                 </tr>
               ) : (
-                groupedTasks.map((group) => (
-                  <Fragment key={group.weekStart}>
-                    <WeekGroupRow colSpan={5} label={group.label} taskCount={group.tasks.length} />
-                    {group.tasks.map(({ task, rowNumber }) => (
-                      <TaskRow
-                        key={task.id}
-                        task={task}
-                        rowNumber={rowNumber}
-                        onOpenContextMenu={handleOpenContextMenu}
-                        onOpenProject={onOpenProject}
-                        onStatusChange={handleStatusChange}
+                groupedTasks.map((group) => {
+                  const isWeekCollapsed = collapsedWeekStarts.has(group.weekStart);
+
+                  return (
+                    <Fragment key={group.weekStart}>
+                      <WeekGroupRow
+                        colSpan={5}
+                        isCollapsed={isWeekCollapsed}
+                        label={group.label}
+                        onToggle={() => handleToggleWeekGroup(group.weekStart)}
+                        taskCount={group.tasks.length}
                       />
-                    ))}
-                  </Fragment>
-                ))
+                      {isWeekCollapsed
+                        ? null
+                        : group.tasks.map(({ task, rowNumber }) => (
+                            <TaskRow
+                              key={task.id}
+                              task={task}
+                              rowNumber={rowNumber}
+                              onOpenContextMenu={handleOpenContextMenu}
+                              onOpenProject={onOpenProject}
+                              onStatusChange={handleStatusChange}
+                            />
+                          ))}
+                    </Fragment>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -411,8 +454,26 @@ function TaskTable({
           </div>
         ) : null}
         <footer className={styles.tableFooter}>
-          <span>{isLoaded ? taskCountLabel : 'Loading tasks'}</span>
-          {isLoaded && groupedTasks.length > 0 ? <span>{weekCountLabel}</span> : null}
+          <div className={styles.tableStats}>
+            <span>{isLoaded ? taskCountLabel : 'Loading tasks'}</span>
+            {isLoaded && hasWeekGroups ? <span>{weekCountLabel}</span> : null}
+          </div>
+          {isLoaded && hasWeekGroups ? (
+            <button
+              className={styles.weekToggleButton}
+              type="button"
+              onClick={handleToggleAllWeekGroups}
+              aria-label={`${weekToggleLabel} weeks`}
+              title={`${weekToggleLabel} weeks`}
+            >
+              {areAllWeeksCollapsed ? (
+                <ChevronDown size={15} aria-hidden="true" />
+              ) : (
+                <ChevronUp size={15} aria-hidden="true" />
+              )}
+              <span>{weekToggleLabel}</span>
+            </button>
+          ) : null}
         </footer>
       </section>
 

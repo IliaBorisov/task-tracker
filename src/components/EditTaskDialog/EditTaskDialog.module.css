@@ -14,7 +14,7 @@
   width: min(460px, 100%);
   max-height: calc(100dvh - 48px);
   border: 1px solid var(--color-border-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
   background: var(--color-surface);
   box-shadow: var(--shadow-popup);
   overflow: hidden;
@@ -44,7 +44,7 @@
   height: 32px;
   place-items: center;
   border: 1px solid var(--color-border-strong);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--color-surface);
   color: var(--color-text-muted);
   cursor: pointer;
@@ -98,7 +98,7 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   cursor: pointer;
   font-weight: 800;
 }

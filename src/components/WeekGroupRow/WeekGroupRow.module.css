@@ -1,29 +1,55 @@
 tr.weekRow td {
   background: var(--color-table-header);
   color: var(--color-table-header-text);
-  padding: 5px 12px;
+  padding: 0;
 }
 
-.weekHeader {
+.weekButton {
   display: flex;
+  width: 100%;
+  min-height: 31px;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 5px 12px;
+  text-align: left;
 }
 
-.weekHeader span {
+.weekButton:hover {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.weekButton:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
+.weekLabelGroup {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.weekLabelGroup span {
   font-size: 0.8rem;
   font-weight: 900;
 }
 
-.weekHeader small {
-  color: var(--color-table-header-text);
+.weekButton small {
+  flex: 0 0 auto;
+  color: currentColor;
   font-size: 0.76rem;
   font-weight: 800;
 }
 
 @media (max-width: 760px) {
-  .weekHeader {
+  .weekButton {
     align-items: flex-start;
     flex-direction: column;
     gap: 2px;

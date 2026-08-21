@@ -2,24 +2,38 @@ function getElectronDatabase() {
   return typeof window !== 'undefined' ? window.taskDatabase : null;
 }
 
-export async function loadTasks() {
-  const database = getElectronDatabase();
-
-  if (database?.readTasks) {
-    return database.readTasks();
-  }
-
-  return [];
+function createEmptyTaskDatabase() {
+  return {
+    projects: {},
+    tasks: {},
+  };
 }
 
-export async function saveTasks(tasks) {
+export async function loadTaskDatabase() {
   const database = getElectronDatabase();
 
-  if (database?.writeTasks) {
-    return database.writeTasks(tasks);
+  if (database?.readDatabase) {
+    return database.readDatabase();
   }
 
-  return tasks;
+  return createEmptyTaskDatabase();
+}
+
+export async function saveTaskDatabase(taskDatabase) {
+  const database = getElectronDatabase();
+  const nextDatabase = {
+    tasks:
+      taskDatabase?.tasks && typeof taskDatabase.tasks === 'object' && !Array.isArray(taskDatabase.tasks)
+        ? taskDatabase.tasks
+        : {},
+    projects: taskDatabase?.projects || {},
+  };
+
+  if (database?.writeDatabase) {
+    return database.writeDatabase(nextDatabase);
+  }
+
+  return nextDatabase;
 }
 
 export async function getTaskDatabasePath() {
@@ -42,6 +56,7 @@ export async function chooseTaskDatabase() {
   return {
     canceled: true,
     databasePath: '',
-    tasks: [],
+    projects: {},
+    tasks: {},
   };
 }

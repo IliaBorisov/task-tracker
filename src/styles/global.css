@@ -32,6 +32,8 @@
   --color-red-text: #bd123c;
   --color-red-hover: #9f1239;
   --color-focus-ring: rgba(18, 102, 241, 0.22);
+  --radius-panel: 4px;
+  --radius-control: 3px;
   --shadow-panel: 0 16px 42px rgba(23, 32, 51, 0.11);
   --shadow-popup: 0 28px 80px rgba(23, 32, 51, 0.28);
 
@@ -73,7 +75,7 @@ textarea {
   width: 100%;
   min-width: 0;
   border: 1px solid var(--color-border-strong);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--color-surface);
   color: var(--color-text);
   outline: none;

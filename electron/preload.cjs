@@ -1,8 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('taskDatabase', {
-  readTasks: () => ipcRenderer.invoke('tasks:read'),
-  writeTasks: (tasks) => ipcRenderer.invoke('tasks:write', tasks),
+  readDatabase: () => ipcRenderer.invoke('tasks:read-database'),
+  writeDatabase: (database) => ipcRenderer.invoke('tasks:write-database', database),
   getPath: () => ipcRenderer.invoke('tasks:path'),
   chooseDatabase: () => ipcRenderer.invoke('tasks:choose-database'),
 });

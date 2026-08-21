@@ -1,31 +1,204 @@
 .appShell {
+  display: flex;
+  height: 100vh;
   min-height: 100vh;
+  flex-direction: column;
   background-color: var(--color-page);
   background-image:
     linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(231, 240, 255, 0.72)),
     url("../../assets/pattern.svg");
   background-repeat: no-repeat, repeat;
   background-size: auto, 3000px 3000px;
+  overflow: hidden;
   padding: 32px;
 }
 
 .workspace {
+  display: flex;
   width: min(1250px, 100%);
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
   margin: 0 auto;
 }
 
 .databaseError {
+  flex: 0 0 auto;
   margin: 0 0 14px;
   border: 1px solid var(--color-red-soft);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--color-red-soft);
   color: var(--color-red-text);
   font-weight: 800;
   padding: 10px 12px;
 }
 
+.taskListView {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.taskViewToolbar {
+  --task-year-switcher-background: var(--color-table-header);
+
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  flex: 0 0 auto;
+  align-items: flex-end;
+  column-gap: 12px;
+  margin-bottom: -1px;
+  padding: 0 14px;
+}
+
+.tableTaskViewToolbar {
+  --task-year-switcher-background: var(--color-table-header);
+}
+
+.kanbanTaskViewToolbar {
+  --task-year-switcher-background: var(--color-surface);
+}
+
+.taskViewTabs {
+  --active-task-view-tab-background: var(--color-table-header);
+
+  display: flex;
+  grid-column: 1;
+  justify-self: start;
+  min-width: 0;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.tableTaskViewTabs {
+  --active-task-view-tab-background: var(--color-table-header);
+}
+
+.kanbanTaskViewTabs {
+  --active-task-view-tab-background: var(--color-surface);
+}
+
+.taskViewTab {
+  height: 30px;
+  min-width: 82px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 800;
+  padding: 0 14px;
+  transform: translateY(1px);
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.taskViewTab:hover {
+  color: var(--color-primary);
+}
+
+.activeTaskViewTab {
+  border-color: var(--color-border-strong);
+  background: var(--active-task-view-tab-background);
+  color: var(--color-primary);
+}
+
+.taskViewTab:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
+.yearSwitcher {
+  display: inline-flex;
+  height: 30px;
+  grid-column: 2;
+  flex: 0 0 auto;
+  justify-self: center;
+  align-items: center;
+  overflow: hidden;
+  margin-bottom: 5px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--task-year-switcher-background);
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.yearSwitcher button {
+  display: inline-grid;
+  width: 30px;
+  height: 100%;
+  place-items: center;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+.yearSwitcher button:hover {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.yearSwitcher button:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
+.yearSwitcher span {
+  display: inline-flex;
+  height: 100%;
+  min-width: 64px;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--color-border-strong);
+  border-left: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.taskViewContent {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
 @media (max-width: 760px) {
   .appShell {
     padding: 22px 14px;
+  }
+
+  .taskViewToolbar {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 6px;
+    overflow-x: auto;
+    padding: 0 8px;
+  }
+
+  .taskViewTabs {
+    grid-column: 1;
+    grid-row: 2;
+    flex: 0 0 auto;
+    justify-self: start;
+  }
+
+  .taskViewTab {
+    min-width: 74px;
+    padding: 0 12px;
+  }
+
+  .yearSwitcher {
+    grid-column: 1;
+    grid-row: 1;
   }
 }

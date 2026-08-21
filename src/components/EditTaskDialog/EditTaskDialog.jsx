@@ -30,7 +30,7 @@ function EditTaskDialog({ task, onCancel, onSave }) {
   function handleProjectNumberChange(event) {
     setDraft((currentDraft) => ({
       ...currentDraft,
-      projectNumber: event.target.value.replace(/[^a-z0-9]/gi, ''),
+      projectNumber: event.target.value,
     }));
   }
 

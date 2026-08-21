@@ -1,7 +1,17 @@
-import { Trash2, X } from 'lucide-react';
+import { Check, Trash2, X } from 'lucide-react';
 import styles from './ConfirmDialog.module.css';
 
-function ConfirmDialog({ description, title, onCancel, onConfirm }) {
+function ConfirmDialog({
+  confirmLabel = 'Delete',
+  confirmTone = 'danger',
+  description,
+  title,
+  onCancel,
+  onConfirm,
+}) {
+  const isDangerConfirm = confirmTone === 'danger';
+  const ConfirmIcon = isDangerConfirm ? Trash2 : Check;
+
   return (
     <div className={styles.backdrop} role="presentation">
       <section
@@ -32,9 +42,13 @@ function ConfirmDialog({ description, title, onCancel, onConfirm }) {
           <button className={styles.cancelButton} type="button" onClick={onCancel}>
             Cancel
           </button>
-          <button className={styles.deleteButton} type="button" onClick={onConfirm}>
-            <Trash2 size={17} aria-hidden="true" />
-            <span>Delete</span>
+          <button
+            className={isDangerConfirm ? styles.deleteButton : styles.confirmButton}
+            type="button"
+            onClick={onConfirm}
+          >
+            <ConfirmIcon size={17} aria-hidden="true" />
+            <span>{confirmLabel}</span>
           </button>
         </div>
       </section>

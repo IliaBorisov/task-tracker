@@ -42,7 +42,7 @@ function TaskRow({
   onStatusChange,
 }) {
   const normalizedStatus = normalizeTaskStatus(task.status);
-  const canOpenProject = Boolean(task.projectNumber && onOpenProject);
+  const canOpenProject = Boolean(task.projectId && task.projectNumber && onOpenProject);
 
   return (
     <tr
@@ -55,7 +55,7 @@ function TaskRow({
           <button
             className={styles.projectNumberButton}
             type="button"
-            onClick={() => onOpenProject(task.projectNumber)}
+            onClick={() => onOpenProject(task.projectId)}
           >
             {task.projectNumber}
           </button>
