@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './TaskForm.module.css';
@@ -34,6 +34,7 @@ function TaskForm({
   const [projectNumber, setProjectNumber] = useState('');
   const [projectName, setProjectName] = useState('');
   const [description, setDescription] = useState('');
+  const [dueDate, setDueDate] = useState('');
   const [isProjectNumberFocused, setIsProjectNumberFocused] = useState(false);
   const [activeProjectSuggestionIndex, setActiveProjectSuggestionIndex] = useState(-1);
   const [suggestionMenuPosition, setSuggestionMenuPosition] = useState(null);
@@ -163,10 +164,11 @@ function TaskForm({
       return;
     }
 
-    onAddTask(projectNumber.trim(), projectName.trim(), description.trim());
+    onAddTask(projectNumber.trim(), projectName.trim(), description.trim(), dueDate);
     setProjectNumber('');
     setProjectName('');
     setDescription('');
+    setDueDate('');
     lastAutoFilledProjectNameRef.current = '';
   }
 
@@ -255,6 +257,28 @@ function TaskForm({
           placeholder="Task Description"
           aria-label="Task Description"
         />
+      </label>
+
+      <label className={`${styles.field} ${styles.dateField}`}>
+        <span>Due</span>
+        <input
+          type="date"
+          value={dueDate}
+          onChange={(event) => setDueDate(event.target.value)}
+          aria-label="Due date"
+          title="Due date"
+        />
+        {dueDate ? (
+          <button
+            className={styles.clearDateButton}
+            type="button"
+            onClick={() => setDueDate('')}
+            aria-label="No due date"
+            title="No due date"
+          >
+            <X size={15} aria-hidden="true" />
+          </button>
+        ) : null}
       </label>
 
       <button

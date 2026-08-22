@@ -1,5 +1,12 @@
+const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DATE_LABEL_FORMATTER = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+
 function toValidDate(value) {
-  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  if (typeof value === 'string' && DATE_KEY_PATTERN.test(value)) {
     return parseDateKey(value);
   }
 
@@ -27,6 +34,26 @@ function parseDateKey(dateKey) {
   return Number.isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
 }
 
+export function normalizeDateKey(value) {
+  if (typeof value !== 'string' || !DATE_KEY_PATTERN.test(value)) {
+    return '';
+  }
+
+  const parsedDate = parseDateKey(value);
+
+  return formatDateKey(parsedDate) === value ? value : '';
+}
+
+export function formatDateLabel(dateKey) {
+  const normalizedDateKey = normalizeDateKey(dateKey);
+
+  if (!normalizedDateKey) {
+    return '';
+  }
+
+  return DATE_LABEL_FORMATTER.format(parseDateKey(normalizedDateKey));
+}
+
 function getIsoWeekNumber(date) {
   const currentDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   currentDate.setUTCDate(currentDate.getUTCDate() + 4 - (currentDate.getUTCDay() || 7));
@@ -48,13 +75,15 @@ export function getMondayWeekStartKey(value = new Date()) {
   return formatDateKey(weekStart);
 }
 
+export function getCurrentWeekFridayKey(value = new Date()) {
+  const weekFriday = parseDateKey(getMondayWeekStartKey(value));
+  weekFriday.setDate(weekFriday.getDate() + 4);
+
+  return formatDateKey(weekFriday);
+}
+
 export function formatWeekLabel(weekStartKey) {
   const weekStart = parseDateKey(weekStartKey);
-  const formatter = new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
 
-  return `Week ${getIsoWeekNumber(weekStart)}, ${formatter.format(weekStart)}`;
+  return `Week ${getIsoWeekNumber(weekStart)}, ${DATE_LABEL_FORMATTER.format(weekStart)}`;
 }

@@ -6,6 +6,18 @@
   background: var(--color-row-hover);
 }
 
+.draggingRow td {
+  opacity: 0.58;
+}
+
+.dropBefore td {
+  border-top: 2px solid var(--color-primary);
+}
+
+.dropAfter td {
+  border-bottom: 2px solid var(--color-primary);
+}
+
 .rowNotStarted {
   --row-status-accent: #ff4f75;
 }
@@ -27,6 +39,15 @@
   color: var(--color-text-soft);
   font-weight: 900;
   text-align: center;
+}
+
+.dragHandle {
+  cursor: grab;
+  user-select: none;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
 }
 
 .projectName {
@@ -80,6 +101,17 @@
 
 .noteText {
   min-width: 0;
+}
+
+.dueDateCell {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.dueDate {
+  color: var(--color-red-hover);
 }
 
 .statusCell.statusCell {

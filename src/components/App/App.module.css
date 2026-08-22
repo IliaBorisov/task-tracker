@@ -4,11 +4,7 @@
   min-height: 100vh;
   flex-direction: column;
   background-color: var(--color-page);
-  background-image:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(231, 240, 255, 0.72)),
-    url("../../assets/pattern.svg");
-  background-repeat: no-repeat, repeat;
-  background-size: auto, 3000px 3000px;
+  background-image: linear-gradient(180deg, #e9edf6 0%, #f7f8fd 34%, #f3f5fb 100%);
   overflow: hidden;
   padding: 32px;
 }
@@ -71,6 +67,7 @@
   min-width: 0;
   align-items: flex-end;
   gap: 6px;
+  margin-left: 12px;
 }
 
 .tableTaskViewTabs {

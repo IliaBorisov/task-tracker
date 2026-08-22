@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { CalendarDays, ChevronDown, ChevronUp } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog.jsx';
 import EditTaskDialog from '../EditTaskDialog/EditTaskDialog.jsx';
@@ -13,16 +13,29 @@ const COLUMN_DEFINITIONS = [
   { id: 'projectCode', label: 'Number', width: 126, minWidth: 92 },
   { id: 'projectName', label: 'Name', width: 220, minWidth: 140 },
   { id: 'description', label: 'Description', width: 330, minWidth: 190 },
+  { id: 'dueDate', label: 'Due', width: 132, minWidth: 118 },
   { id: 'status', label: 'Status', width: 120, minWidth: 120, maxWidth: 120, isResizable: false },
 ];
 
 const FILL_COLUMN_ID = 'description';
+const INTERACTIVE_DRAG_SELECTOR = 'button, select, input, textarea, a, [role="button"]';
+
+function getTaskWeekStart(task) {
+  return task.weekStart || getMondayWeekStartKey(task.createdAt);
+}
+
+function getRowDropPosition(event) {
+  const rowRect = event.currentTarget.getBoundingClientRect();
+  const rowMiddleY = rowRect.top + rowRect.height / 2;
+
+  return event.clientY > rowMiddleY ? 'after' : 'before';
+}
 
 function groupTasksByWeek(tasks) {
   const groups = new Map();
 
   tasks.forEach((task, originalIndex) => {
-    const weekStart = task.weekStart || getMondayWeekStartKey(task.createdAt);
+    const weekStart = getTaskWeekStart(task);
 
     if (!groups.has(weekStart)) {
       groups.set(weekStart, {
@@ -49,6 +62,20 @@ function groupTasksByWeek(tasks) {
       rowNumber: index + 1,
     })),
   }));
+}
+
+function getCollapsedWeekStartsExceptCurrentWeek(weekGroups) {
+  const currentWeekStart = getMondayWeekStartKey();
+
+  if (!weekGroups.some((group) => group.weekStart === currentWeekStart)) {
+    return null;
+  }
+
+  return new Set(
+    weekGroups
+      .filter((group) => group.weekStart !== currentWeekStart)
+      .map((group) => group.weekStart),
+  );
 }
 
 function createDefaultColumnWidths() {
@@ -127,14 +154,18 @@ function TaskTable({
   onChooseDatabase,
   onDeleteTask,
   onUpdateTask,
+  onReorderTask,
   emptyMessage = 'No tasks yet',
   showDatabaseFooter = true,
   tableLabel = 'Task table',
 }) {
   const tableScrollRef = useRef(null);
+  const didApplyDefaultWeekCollapseRef = useRef(false);
   const [editingTask, setEditingTask] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
   const [pendingDeleteTask, setPendingDeleteTask] = useState(null);
+  const [draggingTaskId, setDraggingTaskId] = useState(null);
+  const [dragOverRow, setDragOverRow] = useState(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [columnWidths, setColumnWidths] = useState(createDefaultColumnWidths);
   const [collapsedWeekStarts, setCollapsedWeekStarts] = useState(() => new Set());
@@ -157,9 +188,12 @@ function TaskTable({
     groupedTasks.length === 1 ? 'week' : 'weeks'
   }`;
   const hasWeekGroups = groupedTasks.length > 0;
+  const currentWeekStart = getMondayWeekStartKey();
+  const hasCurrentWeekGroup = groupedTasks.some((group) => group.weekStart === currentWeekStart);
   const areAllWeeksCollapsed =
     hasWeekGroups && groupedTasks.every((group) => collapsedWeekStarts.has(group.weekStart));
   const weekToggleLabel = areAllWeeksCollapsed ? 'Expand all' : 'Collapse all';
+  const canReorderTasks = Boolean(onReorderTask);
 
   useEffect(() => {
     const tableScrollElement = tableScrollRef.current;
@@ -198,6 +232,21 @@ function TaskTable({
       resizeObserver.disconnect();
     };
   }, [minimumTableWidth]);
+
+  useEffect(() => {
+    if (!isLoaded || didApplyDefaultWeekCollapseRef.current) {
+      return;
+    }
+
+    const nextCollapsedWeekStarts = getCollapsedWeekStartsExceptCurrentWeek(groupedTasks);
+
+    if (!nextCollapsedWeekStarts) {
+      return;
+    }
+
+    didApplyDefaultWeekCollapseRef.current = true;
+    setCollapsedWeekStarts(nextCollapsedWeekStarts);
+  }, [groupedTasks, isLoaded]);
 
   function handleResizeStart(columnId, event) {
     if (event.button !== undefined && event.button !== 0) {
@@ -274,6 +323,85 @@ function TaskTable({
     onUpdateTask(taskId, { status });
   }
 
+  function handleRowDragStart(task, event) {
+    if (event.target.closest(INTERACTIVE_DRAG_SELECTOR)) {
+      event.preventDefault();
+      return;
+    }
+
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', task.id);
+    setDraggingTaskId(task.id);
+  }
+
+  function handleRowDragEnd() {
+    setDraggingTaskId(null);
+    setDragOverRow(null);
+  }
+
+  function handleRowDragOver(weekStart, targetTask, event) {
+    const draggedTask = tasks.find((task) => task.id === draggingTaskId);
+
+    if (!draggedTask || draggedTask.id === targetTask.id) {
+      setDragOverRow(null);
+      return;
+    }
+
+    if (getTaskWeekStart(draggedTask) !== weekStart) {
+      event.dataTransfer.dropEffect = 'none';
+      setDragOverRow(null);
+      return;
+    }
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    setDragOverRow({
+      taskId: targetTask.id,
+      position: getRowDropPosition(event),
+    });
+  }
+
+  function handleRowDragLeave(targetTask, event) {
+    if (
+      event.relatedTarget instanceof Node &&
+      event.currentTarget.contains(event.relatedTarget)
+    ) {
+      return;
+    }
+
+    setDragOverRow((currentDragOverRow) =>
+      currentDragOverRow?.taskId === targetTask.id ? null : currentDragOverRow,
+    );
+  }
+
+  function handleRowDrop(weekStart, targetTask, event) {
+    event.preventDefault();
+
+    const taskId = event.dataTransfer.getData('text/plain') || draggingTaskId;
+    const draggedTask = tasks.find((task) => task.id === taskId);
+
+    if (!draggedTask || draggedTask.id === targetTask.id) {
+      handleRowDragEnd();
+      return;
+    }
+
+    if (getTaskWeekStart(draggedTask) !== weekStart) {
+      handleRowDragEnd();
+      return;
+    }
+
+    onReorderTask({
+      taskId,
+      targetTaskId: targetTask.id,
+      weekStart,
+      position:
+        dragOverRow?.taskId === targetTask.id
+          ? dragOverRow.position
+          : getRowDropPosition(event),
+    });
+    handleRowDragEnd();
+  }
+
   function handleToggleWeekGroup(weekStart) {
     setCollapsedWeekStarts((currentCollapsedWeekStarts) => {
       const nextCollapsedWeekStarts = new Set(currentCollapsedWeekStarts);
@@ -296,6 +424,16 @@ function TaskTable({
     setCollapsedWeekStarts(
       areAllWeeksCollapsed ? new Set() : new Set(groupedTasks.map((group) => group.weekStart)),
     );
+  }
+
+  function handleCollapseToCurrentWeek() {
+    const nextCollapsedWeekStarts = getCollapsedWeekStartsExceptCurrentWeek(groupedTasks);
+
+    if (!nextCollapsedWeekStarts) {
+      return;
+    }
+
+    setCollapsedWeekStarts(nextCollapsedWeekStarts);
   }
 
   function handleOpenContextMenu(task, event) {
@@ -397,13 +535,13 @@ function TaskTable({
             <tbody>
               {!isLoaded ? (
                 <tr>
-                  <td className={styles.emptyState} colSpan="5">
+                  <td className={styles.emptyState} colSpan="6">
                     Loading tasks
                   </td>
                 </tr>
               ) : tasks.length === 0 ? (
                 <tr>
-                  <td className={styles.emptyState} colSpan="5">
+                  <td className={styles.emptyState} colSpan="6">
                     {emptyMessage}
                   </td>
                 </tr>
@@ -414,7 +552,7 @@ function TaskTable({
                   return (
                     <Fragment key={group.weekStart}>
                       <WeekGroupRow
-                        colSpan={5}
+                        colSpan={6}
                         isCollapsed={isWeekCollapsed}
                         label={group.label}
                         onToggle={() => handleToggleWeekGroup(group.weekStart)}
@@ -427,8 +565,31 @@ function TaskTable({
                               key={task.id}
                               task={task}
                               rowNumber={rowNumber}
+                              dropPosition={
+                                dragOverRow?.taskId === task.id ? dragOverRow.position : ''
+                              }
+                              isDragging={draggingTaskId === task.id}
                               onOpenContextMenu={handleOpenContextMenu}
                               onOpenProject={onOpenProject}
+                              onRowDragStart={
+                                canReorderTasks ? handleRowDragStart : undefined
+                              }
+                              onRowDragEnd={canReorderTasks ? handleRowDragEnd : undefined}
+                              onRowDragOver={
+                                canReorderTasks
+                                  ? (targetTask, event) =>
+                                      handleRowDragOver(group.weekStart, targetTask, event)
+                                  : undefined
+                              }
+                              onRowDragLeave={
+                                canReorderTasks ? handleRowDragLeave : undefined
+                              }
+                              onRowDrop={
+                                canReorderTasks
+                                  ? (targetTask, event) =>
+                                      handleRowDrop(group.weekStart, targetTask, event)
+                                  : undefined
+                              }
                               onStatusChange={handleStatusChange}
                             />
                           ))}
@@ -459,20 +620,34 @@ function TaskTable({
             {isLoaded && hasWeekGroups ? <span>{weekCountLabel}</span> : null}
           </div>
           {isLoaded && hasWeekGroups ? (
-            <button
-              className={styles.weekToggleButton}
-              type="button"
-              onClick={handleToggleAllWeekGroups}
-              aria-label={`${weekToggleLabel} weeks`}
-              title={`${weekToggleLabel} weeks`}
-            >
-              {areAllWeeksCollapsed ? (
-                <ChevronDown size={15} aria-hidden="true" />
-              ) : (
-                <ChevronUp size={15} aria-hidden="true" />
-              )}
-              <span>{weekToggleLabel}</span>
-            </button>
+            <div className={styles.weekActions}>
+              {hasCurrentWeekGroup ? (
+                <button
+                  className={styles.weekToggleButton}
+                  type="button"
+                  onClick={handleCollapseToCurrentWeek}
+                  aria-label="Collapse all weeks except current week"
+                  title="Collapse all but current week"
+                >
+                  <CalendarDays size={15} aria-hidden="true" />
+                  <span>Current week</span>
+                </button>
+              ) : null}
+              <button
+                className={styles.weekToggleButton}
+                type="button"
+                onClick={handleToggleAllWeekGroups}
+                aria-label={`${weekToggleLabel} weeks`}
+                title={`${weekToggleLabel} weeks`}
+              >
+                {areAllWeeksCollapsed ? (
+                  <ChevronDown size={15} aria-hidden="true" />
+                ) : (
+                  <ChevronUp size={15} aria-hidden="true" />
+                )}
+                <span>{weekToggleLabel}</span>
+              </button>
+            </div>
           ) : null}
         </footer>
       </section>

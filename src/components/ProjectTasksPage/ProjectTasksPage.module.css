@@ -191,7 +191,7 @@
   z-index: 25;
   display: grid;
   place-items: center;
-  background: rgba(16, 20, 24, 0.32);
+  background: rgba(37, 47, 78, 0.28);
   padding: 14px;
 }
 
@@ -364,14 +364,20 @@
 }
 
 .workedWeekDay {
-  --worked-week-border: rgba(53, 215, 95, 0.34);
-  --worked-week-soft: #caffd2;
-  --worked-week-text: #075927;
+  --worked-week-border: rgba(255, 79, 117, 0.34);
+  --worked-week-soft: #ffd7e2;
+  --worked-week-text: #8d0f2e;
 
   background: var(--worked-week-soft);
   border-top-color: var(--worked-week-border);
   border-bottom-color: var(--worked-week-border);
   color: var(--worked-week-text);
+}
+
+.workedWeekNotStarted {
+  --worked-week-border: rgba(255, 79, 117, 0.34);
+  --worked-week-soft: #ffd7e2;
+  --worked-week-text: #8d0f2e;
 }
 
 .workedWeekInProgress {

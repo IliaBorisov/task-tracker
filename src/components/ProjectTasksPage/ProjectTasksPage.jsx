@@ -9,6 +9,7 @@ const EMPTY_PROJECT_LOOKUP = new Map();
 const MONTH_FORMATTER = new Intl.DateTimeFormat('en-US', { month: 'long' });
 const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const WORKED_WEEK_STATUS_PRIORITY = {
+  [TASK_STATUS.NOT_STARTED]: 4,
   [TASK_STATUS.IN_PROGRESS]: 1,
   [TASK_STATUS.IN_REVIEW]: 2,
   [TASK_STATUS.COMPLETE]: 3,
@@ -53,11 +54,6 @@ function getMonthCalendarCells(year, month) {
 function getWorkedWeekStatuses(tasks) {
   return tasks.reduce((weekStatuses, task) => {
     const status = normalizeTaskStatus(task.status);
-
-    if (status === TASK_STATUS.NOT_STARTED) {
-      return weekStatuses;
-    }
-
     const weekStart = task.weekStart || getMondayWeekStartKey(task.createdAt);
 
     if (!weekStart) {
@@ -78,6 +74,10 @@ function getWorkedWeekStatuses(tasks) {
 }
 
 function getWorkedWeekStatusClassName(status) {
+  if (status === TASK_STATUS.NOT_STARTED) {
+    return styles.workedWeekNotStarted;
+  }
+
   if (status === TASK_STATUS.IN_PROGRESS) {
     return styles.workedWeekInProgress;
   }
@@ -104,6 +104,7 @@ function ProjectTasksPage({
   onDeleteTask,
   onUpdateProject,
   onUpdateTask,
+  onReorderTask,
 }) {
   const [isEditingProject, setIsEditingProject] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -304,6 +305,7 @@ function ProjectTasksPage({
         isLoaded={isLoaded}
         onDeleteTask={onDeleteTask}
         onUpdateTask={onUpdateTask}
+        onReorderTask={onReorderTask}
         showDatabaseFooter={false}
         tableLabel={`Tasks for project ${projectNumber}`}
       />

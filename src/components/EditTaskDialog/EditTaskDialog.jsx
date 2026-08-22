@@ -1,7 +1,7 @@
 import { Check, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { TASK_STATUS_OPTIONS, normalizeTaskStatus } from '../../constants/taskStatus.js';
-import { getMondayWeekStartKey } from '../../utils/week.js';
+import { getMondayWeekStartKey, normalizeDateKey } from '../../utils/week.js';
 import styles from './EditTaskDialog.module.css';
 
 function createDraft(task) {
@@ -12,6 +12,7 @@ function createDraft(task) {
     note: task.note === undefined || task.note === null ? '' : String(task.note),
     status: normalizeTaskStatus(task.status),
     weekStart: task.weekStart || getMondayWeekStartKey(task.createdAt),
+    dueDate: normalizeDateKey(task.dueDate),
   };
 }
 
@@ -48,6 +49,7 @@ function EditTaskDialog({ task, onCancel, onSave }) {
       note: draft.note.trim(),
       status: normalizeTaskStatus(draft.status),
       weekStart: draft.weekStart,
+      dueDate: normalizeDateKey(draft.dueDate),
     });
   }
 
@@ -125,38 +127,76 @@ function EditTaskDialog({ task, onCancel, onSave }) {
             />
           </label>
 
-          <label className={styles.field}>
-            <span>Week</span>
-            <input
-              type="date"
-              value={draft.weekStart}
-              onChange={(event) =>
-                setDraft((currentDraft) => ({
-                  ...currentDraft,
-                  weekStart: getMondayWeekStartKey(event.target.value),
-                }))
-              }
-            />
-          </label>
+          <div className={styles.compactFieldRow}>
+            <label className={styles.field}>
+              <span>Week</span>
+              <input
+                type="date"
+                value={draft.weekStart}
+                onChange={(event) =>
+                  setDraft((currentDraft) => ({
+                    ...currentDraft,
+                    weekStart: getMondayWeekStartKey(event.target.value),
+                  }))
+                }
+              />
+            </label>
 
-          <label className={styles.field}>
-            <span>Status</span>
-            <select
-              value={draft.status}
-              onChange={(event) =>
-                setDraft((currentDraft) => ({
-                  ...currentDraft,
-                  status: event.target.value,
-                }))
-              }
-            >
-              {TASK_STATUS_OPTIONS.map((statusOption) => (
-                <option key={statusOption} value={statusOption}>
-                  {statusOption}
-                </option>
-              ))}
-            </select>
-          </label>
+            <label className={styles.field}>
+              <span>Due</span>
+              <div
+                className={`${styles.dateInputWrap} ${
+                  draft.dueDate ? styles.dateInputWrapWithClear : ''
+                }`}
+              >
+                <input
+                  type="date"
+                  value={draft.dueDate}
+                  onChange={(event) =>
+                    setDraft((currentDraft) => ({
+                      ...currentDraft,
+                      dueDate: event.target.value,
+                    }))
+                  }
+                />
+                {draft.dueDate ? (
+                  <button
+                    className={styles.clearDateButton}
+                    type="button"
+                    onClick={() =>
+                      setDraft((currentDraft) => ({
+                        ...currentDraft,
+                        dueDate: '',
+                      }))
+                    }
+                    aria-label="No due date"
+                    title="No due date"
+                  >
+                    <X size={15} aria-hidden="true" />
+                  </button>
+                ) : null}
+              </div>
+            </label>
+
+            <label className={styles.field}>
+              <span>Status</span>
+              <select
+                value={draft.status}
+                onChange={(event) =>
+                  setDraft((currentDraft) => ({
+                    ...currentDraft,
+                    status: event.target.value,
+                  }))
+                }
+              >
+                {TASK_STATUS_OPTIONS.map((statusOption) => (
+                  <option key={statusOption} value={statusOption}>
+                    {statusOption}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
 
           <div className={styles.actions}>
             <button className={styles.cancelButton} type="button" onClick={onCancel}>

@@ -1,8 +1,8 @@
-import { ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { CalendarDays, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import noteIcon from '../../assets/note.svg';
 import { TASK_STATUS, TASK_STATUS_OPTIONS, normalizeTaskStatus } from '../../constants/taskStatus.js';
-import { formatWeekLabel, getMondayWeekStartKey } from '../../utils/week.js';
+import { formatDateLabel, formatWeekLabel, getMondayWeekStartKey } from '../../utils/week.js';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog.jsx';
 import EditTaskDialog from '../EditTaskDialog/EditTaskDialog.jsx';
 import TaskContextMenu from '../TaskContextMenu/TaskContextMenu.jsx';
@@ -36,11 +36,22 @@ function getDropTargetId(weekStart, status) {
   return `${weekStart}:${status}`;
 }
 
+function getTaskWeekStart(task) {
+  return task.weekStart || getMondayWeekStartKey(task.createdAt);
+}
+
+function getCardDropPosition(event) {
+  const cardRect = event.currentTarget.getBoundingClientRect();
+  const cardMiddleY = cardRect.top + cardRect.height / 2;
+
+  return event.clientY > cardMiddleY ? 'after' : 'before';
+}
+
 function createWeekGroups(tasks) {
   const groups = new Map();
 
   tasks.forEach((task) => {
-    const weekStart = task.weekStart || getMondayWeekStartKey(task.createdAt);
+    const weekStart = getTaskWeekStart(task);
     const status = normalizeTaskStatus(task.status);
 
     if (!groups.has(weekStart)) {
@@ -62,6 +73,20 @@ function createWeekGroups(tasks) {
   );
 }
 
+function getCollapsedWeekStartsExceptCurrentWeek(weekGroups) {
+  const currentWeekStart = getMondayWeekStartKey();
+
+  if (!weekGroups.some((group) => group.weekStart === currentWeekStart)) {
+    return null;
+  }
+
+  return new Set(
+    weekGroups
+      .filter((group) => group.weekStart !== currentWeekStart)
+      .map((group) => group.weekStart),
+  );
+}
+
 function KanbanBoard({
   tasks,
   isLoaded,
@@ -69,22 +94,41 @@ function KanbanBoard({
   onOpenProject,
   onDeleteTask,
   onUpdateTask,
+  onReorderTask,
   boardLabel = 'Kanban board',
 }) {
+  const didApplyDefaultWeekCollapseRef = useRef(false);
   const [draggingTaskId, setDraggingTaskId] = useState(null);
   const [dragOverTarget, setDragOverTarget] = useState(null);
+  const [dragOverCard, setDragOverCard] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
   const [pendingDeleteTask, setPendingDeleteTask] = useState(null);
-  const [pendingWeekMove, setPendingWeekMove] = useState(null);
   const [collapsedWeekStarts, setCollapsedWeekStarts] = useState(() => new Set());
   const weekGroups = useMemo(() => createWeekGroups(tasks), [tasks]);
   const taskCountLabel = `${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}`;
   const weekCountLabel = `${weekGroups.length} ${weekGroups.length === 1 ? 'week' : 'weeks'}`;
   const hasWeekGroups = weekGroups.length > 0;
+  const currentWeekStart = getMondayWeekStartKey();
+  const hasCurrentWeekGroup = weekGroups.some((group) => group.weekStart === currentWeekStart);
   const areAllWeeksCollapsed =
     hasWeekGroups && weekGroups.every((group) => collapsedWeekStarts.has(group.weekStart));
   const weekToggleLabel = areAllWeeksCollapsed ? 'Expand all' : 'Collapse all';
+
+  useEffect(() => {
+    if (!isLoaded || didApplyDefaultWeekCollapseRef.current) {
+      return;
+    }
+
+    const nextCollapsedWeekStarts = getCollapsedWeekStartsExceptCurrentWeek(weekGroups);
+
+    if (!nextCollapsedWeekStarts) {
+      return;
+    }
+
+    didApplyDefaultWeekCollapseRef.current = true;
+    setCollapsedWeekStarts(nextCollapsedWeekStarts);
+  }, [isLoaded, weekGroups]);
 
   function handleDragStart(task, event) {
     event.dataTransfer.effectAllowed = 'move';
@@ -95,57 +139,110 @@ function KanbanBoard({
   function handleDragEnd() {
     setDraggingTaskId(null);
     setDragOverTarget(null);
+    setDragOverCard(null);
   }
 
-  function handleDragOver(weekStart, status, event) {
+  function canDropTaskInWeek(taskId, weekStart) {
+    const task = tasks.find((currentTask) => currentTask.id === taskId);
+
+    return Boolean(task && getTaskWeekStart(task) === weekStart);
+  }
+
+  function handleColumnDragOver(weekStart, status, event) {
+    if (!canDropTaskInWeek(draggingTaskId, weekStart)) {
+      event.dataTransfer.dropEffect = 'none';
+      setDragOverTarget(null);
+      setDragOverCard(null);
+      return;
+    }
+
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
     setDragOverTarget(getDropTargetId(weekStart, status));
+    setDragOverCard(null);
   }
 
-  function handleDrop(weekStart, status, event) {
+  function handleColumnDrop(weekStart, status, event) {
     event.preventDefault();
 
     const taskId = event.dataTransfer.getData('text/plain') || draggingTaskId;
     const task = tasks.find((currentTask) => currentTask.id === taskId);
     const nextStatus = normalizeTaskStatus(status);
-    const currentWeekStart = task
-      ? task.weekStart || getMondayWeekStartKey(task.createdAt)
-      : weekStart;
 
-    if (!task) {
+    if (!task || getTaskWeekStart(task) !== weekStart) {
       handleDragEnd();
       return;
     }
 
-    const updates = {};
-
-    if (normalizeTaskStatus(task.status) !== nextStatus) {
-      updates.status = nextStatus;
-    }
-
-    if (currentWeekStart !== weekStart) {
-      updates.weekStart = weekStart;
-    }
-
-    if (Object.keys(updates).length === 0) {
-      handleDragEnd();
-      return;
-    }
-
-    if (currentWeekStart !== weekStart) {
-      setPendingWeekMove({
+    if (onReorderTask) {
+      onReorderTask({
         taskId: task.id,
-        taskTitle: getTaskTitle(task),
-        fromWeekLabel: formatWeekLabel(currentWeekStart),
-        toWeekLabel: formatWeekLabel(weekStart),
-        updates,
+        weekStart,
+        status: nextStatus,
       });
+    } else if (normalizeTaskStatus(task.status) !== nextStatus) {
+      onUpdateTask(task.id, { status: nextStatus });
+    }
+
+    handleDragEnd();
+  }
+
+  function handleCardDragOver(weekStart, status, targetTask, event) {
+    if (draggingTaskId === targetTask.id || !canDropTaskInWeek(draggingTaskId, weekStart)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'move';
+    setDragOverTarget(null);
+    setDragOverCard({
+      taskId: targetTask.id,
+      position: getCardDropPosition(event),
+    });
+  }
+
+  function handleCardDragLeave(targetTask, event) {
+    if (
+      event.relatedTarget instanceof Node &&
+      event.currentTarget.contains(event.relatedTarget)
+    ) {
+      return;
+    }
+
+    setDragOverCard((currentDragOverCard) =>
+      currentDragOverCard?.taskId === targetTask.id ? null : currentDragOverCard,
+    );
+  }
+
+  function handleCardDrop(weekStart, status, targetTask, event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const taskId = event.dataTransfer.getData('text/plain') || draggingTaskId;
+    const task = tasks.find((currentTask) => currentTask.id === taskId);
+    const nextStatus = normalizeTaskStatus(status);
+
+    if (!task || task.id === targetTask.id || getTaskWeekStart(task) !== weekStart) {
       handleDragEnd();
       return;
     }
 
-    onUpdateTask(task.id, updates);
+    if (onReorderTask) {
+      onReorderTask({
+        taskId: task.id,
+        targetTaskId: targetTask.id,
+        weekStart,
+        status: nextStatus,
+        position:
+          dragOverCard?.taskId === targetTask.id
+            ? dragOverCard.position
+            : getCardDropPosition(event),
+      });
+    } else if (normalizeTaskStatus(task.status) !== nextStatus) {
+      onUpdateTask(task.id, { status: nextStatus });
+    }
+
     handleDragEnd();
   }
 
@@ -171,6 +268,16 @@ function KanbanBoard({
     setCollapsedWeekStarts(
       areAllWeeksCollapsed ? new Set() : new Set(weekGroups.map((group) => group.weekStart)),
     );
+  }
+
+  function handleCollapseToCurrentWeek() {
+    const nextCollapsedWeekStarts = getCollapsedWeekStartsExceptCurrentWeek(weekGroups);
+
+    if (!nextCollapsedWeekStarts) {
+      return;
+    }
+
+    setCollapsedWeekStarts(nextCollapsedWeekStarts);
   }
 
   function handleOpenContextMenu(task, event) {
@@ -218,30 +325,35 @@ function KanbanBoard({
     setPendingDeleteTask(null);
   }
 
-  function handleCancelWeekMove() {
-    setPendingWeekMove(null);
-  }
-
-  function handleConfirmWeekMove() {
-    if (!pendingWeekMove) {
-      return;
-    }
-
-    onUpdateTask(pendingWeekMove.taskId, pendingWeekMove.updates);
-    setPendingWeekMove(null);
-  }
-
-  function renderTaskCard(task) {
+  function renderTaskCard(task, weekStart, status) {
     const canOpenProject = Boolean(task.projectId && task.projectNumber && onOpenProject);
     const isDragging = draggingTaskId === task.id;
+    const dueDateLabel = formatDateLabel(task.dueDate);
+    const cardDropPosition = dragOverCard?.taskId === task.id ? dragOverCard.position : '';
+    const cardClassNames = [styles.card];
+
+    if (isDragging) {
+      cardClassNames.push(styles.draggingCard);
+    }
+
+    if (cardDropPosition === 'before') {
+      cardClassNames.push(styles.cardDropBefore);
+    }
+
+    if (cardDropPosition === 'after') {
+      cardClassNames.push(styles.cardDropAfter);
+    }
 
     return (
       <article
-        className={`${styles.card} ${isDragging ? styles.draggingCard : ''}`}
+        className={cardClassNames.join(' ')}
         draggable
         key={task.id}
         onDragStart={(event) => handleDragStart(task, event)}
         onDragEnd={handleDragEnd}
+        onDragOver={(event) => handleCardDragOver(weekStart, status, task, event)}
+        onDragLeave={(event) => handleCardDragLeave(task, event)}
+        onDrop={(event) => handleCardDrop(weekStart, status, task, event)}
         onContextMenu={(event) => handleOpenContextMenu(task, event)}
         aria-label={getTaskTitle(task)}
       >
@@ -261,6 +373,13 @@ function KanbanBoard({
 
         <h3 className={styles.cardTitle}>{task.projectName}</h3>
         <p className={styles.cardDescription}>{task.description}</p>
+
+        {dueDateLabel ? (
+          <p className={styles.cardDueDate}>
+            <CalendarDays size={13} aria-hidden="true" />
+            <span>Due {dueDateLabel}</span>
+          </p>
+        ) : null}
 
         {task.note ? (
           <p className={styles.cardNote}>
@@ -322,15 +441,29 @@ function KanbanBoard({
                               }`}
                               key={status}
                               onDragOver={(event) =>
-                                handleDragOver(group.weekStart, status, event)
+                                handleColumnDragOver(group.weekStart, status, event)
                               }
-                              onDragEnter={() => setDragOverTarget(dropTargetId)}
-                              onDragLeave={() =>
+                              onDragEnter={(event) => {
+                                if (canDropTaskInWeek(draggingTaskId, group.weekStart)) {
+                                  setDragOverTarget(dropTargetId);
+                                  setDragOverCard(null);
+                                } else {
+                                  event.dataTransfer.dropEffect = 'none';
+                                }
+                              }}
+                              onDragLeave={(event) => {
+                                if (
+                                  event.relatedTarget instanceof Node &&
+                                  event.currentTarget.contains(event.relatedTarget)
+                                ) {
+                                  return;
+                                }
+
                                 setDragOverTarget((currentTarget) =>
                                   currentTarget === dropTargetId ? null : currentTarget,
-                                )
-                              }
-                              onDrop={(event) => handleDrop(group.weekStart, status, event)}
+                                );
+                              }}
+                              onDrop={(event) => handleColumnDrop(group.weekStart, status, event)}
                               aria-label={`${group.label} ${status} tasks`}
                             >
                               <header className={styles.columnHeader}>
@@ -339,7 +472,9 @@ function KanbanBoard({
                               </header>
                               <div className={styles.cardList}>
                                 {columnTasks.length > 0 ? (
-                                  columnTasks.map(renderTaskCard)
+                                  columnTasks.map((task) =>
+                                    renderTaskCard(task, group.weekStart, status),
+                                  )
                                 ) : (
                                   <p className={styles.columnEmpty}>No tasks</p>
                                 )}
@@ -361,20 +496,34 @@ function KanbanBoard({
             {isLoaded && hasWeekGroups ? <span>{weekCountLabel}</span> : null}
           </div>
           {isLoaded && hasWeekGroups ? (
-            <button
-              className={styles.weekToggleButton}
-              type="button"
-              onClick={handleToggleAllWeekGroups}
-              aria-label={`${weekToggleLabel} weeks`}
-              title={`${weekToggleLabel} weeks`}
-            >
-              {areAllWeeksCollapsed ? (
-                <ChevronDown size={15} aria-hidden="true" />
-              ) : (
-                <ChevronUp size={15} aria-hidden="true" />
-              )}
-              <span>{weekToggleLabel}</span>
-            </button>
+            <div className={styles.weekActions}>
+              {hasCurrentWeekGroup ? (
+                <button
+                  className={styles.weekToggleButton}
+                  type="button"
+                  onClick={handleCollapseToCurrentWeek}
+                  aria-label="Collapse all weeks except current week"
+                  title="Collapse all but current week"
+                >
+                  <CalendarDays size={15} aria-hidden="true" />
+                  <span>Current week</span>
+                </button>
+              ) : null}
+              <button
+                className={styles.weekToggleButton}
+                type="button"
+                onClick={handleToggleAllWeekGroups}
+                aria-label={`${weekToggleLabel} weeks`}
+                title={`${weekToggleLabel} weeks`}
+              >
+                {areAllWeeksCollapsed ? (
+                  <ChevronDown size={15} aria-hidden="true" />
+                ) : (
+                  <ChevronUp size={15} aria-hidden="true" />
+                )}
+                <span>{weekToggleLabel}</span>
+              </button>
+            </div>
           ) : null}
         </footer>
       </section>
@@ -385,17 +534,6 @@ function KanbanBoard({
           description={`Delete ${getTaskTitle(pendingDeleteTask)}?`}
           onCancel={() => setPendingDeleteTask(null)}
           onConfirm={handleConfirmDelete}
-        />
-      ) : null}
-
-      {pendingWeekMove ? (
-        <ConfirmDialog
-          confirmLabel="Move"
-          confirmTone="primary"
-          title="Move task to another week?"
-          description={`Move ${pendingWeekMove.taskTitle} from ${pendingWeekMove.fromWeekLabel} to ${pendingWeekMove.toWeekLabel}?`}
-          onCancel={handleCancelWeekMove}
-          onConfirm={handleConfirmWeekMove}
         />
       ) : null}
 

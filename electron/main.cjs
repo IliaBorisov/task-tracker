@@ -6,6 +6,8 @@ const path = require('node:path');
 const isDev = !app.isPackaged;
 let mainWindow = null;
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
+const DEFAULT_TASK_VIEW = 'table';
+const TASK_VIEW_VALUES = new Set([DEFAULT_TASK_VIEW, 'kanban']);
 
 function getDefaultDatabasePath() {
   return path.join(app.getPath('userData'), 'tasks.json');
@@ -36,6 +38,44 @@ async function writeSettings(settings) {
 
   await fs.mkdir(path.dirname(settingsPath), { recursive: true });
   await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
+}
+
+function normalizeDefaultTaskView(defaultTaskView) {
+  return TASK_VIEW_VALUES.has(defaultTaskView) ? defaultTaskView : DEFAULT_TASK_VIEW;
+}
+
+function normalizeAppSettings(settings = {}) {
+  return {
+    databasePath:
+      typeof settings.databasePath === 'string' && settings.databasePath.trim()
+        ? settings.databasePath
+        : '',
+    defaultTaskView: normalizeDefaultTaskView(settings.defaultTaskView),
+  };
+}
+
+async function readAppSettings() {
+  return normalizeAppSettings(await readSettings());
+}
+
+async function writeAppSettings(settings) {
+  const currentSettings = await readSettings();
+  const updates =
+    settings && typeof settings === 'object' && !Array.isArray(settings) ? settings : {};
+  const nextSettings = { ...currentSettings };
+
+  if (Object.prototype.hasOwnProperty.call(updates, 'databasePath')) {
+    nextSettings.databasePath =
+      typeof updates.databasePath === 'string' ? updates.databasePath : '';
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, 'defaultTaskView')) {
+    nextSettings.defaultTaskView = normalizeDefaultTaskView(updates.defaultTaskView);
+  }
+
+  await writeSettings(nextSettings);
+
+  return normalizeAppSettings(nextSettings);
 }
 
 async function getDatabasePath() {
@@ -74,6 +114,35 @@ function createId() {
 
 function getProjectNumberKey(projectNumber) {
   return String(projectNumber || '').trim().toLowerCase();
+}
+
+function formatDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateKey(dateKey) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+}
+
+function normalizeDateKey(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return '';
+  }
+
+  const parsedDate = parseDateKey(value);
+
+  if (!parsedDate) {
+    return '';
+  }
+
+  return formatDateKey(parsedDate) === value ? value : '';
 }
 
 function addProjectRecord(
@@ -161,6 +230,8 @@ function normalizeTaskRecord(task, projects, projectIdsByNumber) {
     return null;
   }
 
+  const weekStart = task.weekStart || '';
+
   return {
     id: task.id || createId(),
     projectId,
@@ -168,7 +239,8 @@ function normalizeTaskRecord(task, projects, projectIdsByNumber) {
     note: task.note === undefined || task.note === null ? '' : String(task.note),
     status: task.status || 'Not started',
     createdAt,
-    weekStart: task.weekStart || '',
+    weekStart,
+    dueDate: normalizeDateKey(task.dueDate),
   };
 }
 
@@ -261,6 +333,13 @@ function parseTaskDatabase(fileContents, databasePath) {
     savedDatabase = JSON.parse(fileContents);
   } catch {
     throw createDatabaseReadError(databasePath, 'the file is not valid JSON');
+  }
+
+  if (Array.isArray(savedDatabase)) {
+    return normalizeTaskDatabase({
+      projects: {},
+      tasks: savedDatabase,
+    });
   }
 
   if (
@@ -368,6 +447,8 @@ function registerTaskDatabaseHandlers() {
   ipcMain.handle('tasks:read-database', readTaskDatabase);
   ipcMain.handle('tasks:write-database', (_event, database) => writeTaskDatabase(database));
   ipcMain.handle('tasks:path', () => getDatabasePath());
+  ipcMain.handle('tasks:read-settings', readAppSettings);
+  ipcMain.handle('tasks:write-settings', (_event, settings) => writeAppSettings(settings));
   ipcMain.handle('tasks:choose-database', (event) => {
     return chooseDatabaseFile(BrowserWindow.fromWebContents(event.sender));
   });

@@ -1,5 +1,6 @@
 import { TASK_STATUS, TASK_STATUS_OPTIONS, normalizeTaskStatus } from '../../constants/taskStatus.js';
 import noteIcon from '../../assets/note.svg';
+import { formatDateLabel } from '../../utils/week.js';
 import styles from './TaskRow.module.css';
 
 function getStatusStyle(status) {
@@ -37,19 +38,55 @@ function getRowStatusStyle(status) {
 function TaskRow({
   task,
   rowNumber,
+  dropPosition = '',
+  isDragging = false,
   onOpenContextMenu,
   onOpenProject,
+  onRowDragEnd,
+  onRowDragLeave,
+  onRowDragOver,
+  onRowDragStart,
+  onRowDrop,
   onStatusChange,
 }) {
   const normalizedStatus = normalizeTaskStatus(task.status);
+  const dueDateLabel = formatDateLabel(task.dueDate);
   const canOpenProject = Boolean(task.projectId && task.projectNumber && onOpenProject);
+  const rowClassNames = [styles.taskRow, getRowStatusStyle(normalizedStatus)];
+  const numberCellClassNames = [styles.numberCell];
+
+  if (isDragging) {
+    rowClassNames.push(styles.draggingRow);
+  }
+
+  if (onRowDragStart) {
+    numberCellClassNames.push(styles.dragHandle);
+  }
+
+  if (dropPosition === 'before') {
+    rowClassNames.push(styles.dropBefore);
+  }
+
+  if (dropPosition === 'after') {
+    rowClassNames.push(styles.dropAfter);
+  }
 
   return (
     <tr
-      className={`${styles.taskRow} ${getRowStatusStyle(normalizedStatus)}`}
+      className={rowClassNames.join(' ')}
       onContextMenu={(event) => onOpenContextMenu(task, event)}
+      onDragEnd={onRowDragEnd}
+      onDragOver={onRowDragOver ? (event) => onRowDragOver(task, event) : undefined}
+      onDragLeave={onRowDragLeave ? (event) => onRowDragLeave(task, event) : undefined}
+      onDrop={onRowDrop ? (event) => onRowDrop(task, event) : undefined}
     >
-      <td className={styles.numberCell}>{rowNumber}</td>
+      <td
+        className={numberCellClassNames.join(' ')}
+        draggable={Boolean(onRowDragStart)}
+        onDragStart={onRowDragStart ? (event) => onRowDragStart(task, event) : undefined}
+      >
+        {rowNumber}
+      </td>
       <td>
         {canOpenProject ? (
           <button
@@ -73,6 +110,11 @@ function TaskRow({
             <img className={styles.noteIcon} src={noteIcon} alt="" aria-hidden="true" />
             <span className={styles.noteText}>{task.note}</span>
           </p>
+        ) : null}
+      </td>
+      <td className={styles.dueDateCell}>
+        {dueDateLabel ? (
+          <span className={styles.dueDate}>{dueDateLabel}</span>
         ) : null}
       </td>
       <td className={styles.statusCell}>
