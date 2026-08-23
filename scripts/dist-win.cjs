@@ -7,6 +7,10 @@ const releasePath = path.join(projectRoot, 'release');
 const releaseNumberPath = path.join(projectRoot, 'build', 'release-number.txt');
 const isWindows = process.platform === 'win32';
 
+function getReleaseArtifactName(releaseNumber) {
+  return `TaskTracker-v${releaseNumber}.exe`;
+}
+
 function readCurrentReleaseNumber() {
   if (!fs.existsSync(releaseNumberPath)) {
     return 0;
@@ -42,6 +46,29 @@ function cleanReleaseDirectory() {
   fs.mkdirSync(releasePath, { recursive: true });
 }
 
+function keepOnlyReleaseExecutable(releaseNumber) {
+  const artifactName = getReleaseArtifactName(releaseNumber);
+  const artifactPath = path.join(releasePath, artifactName);
+
+  if (!fs.existsSync(artifactPath)) {
+    throw new Error(`Expected release executable was not created: ${artifactName}`);
+  }
+
+  fs.readdirSync(releasePath).forEach((entryName) => {
+    if (entryName === artifactName) {
+      return;
+    }
+
+    fs.rmSync(path.join(releasePath, entryName), { force: true, recursive: true });
+  });
+
+  const remainingEntries = fs.readdirSync(releasePath);
+
+  if (remainingEntries.length !== 1 || remainingEntries[0] !== artifactName) {
+    throw new Error(`Windows release must contain only ${artifactName}`);
+  }
+}
+
 const nextReleaseNumber = readCurrentReleaseNumber() + 1;
 
 console.log(`Building Windows release ${nextReleaseNumber}`);
@@ -49,8 +76,9 @@ console.log(`Building Windows release ${nextReleaseNumber}`);
 run('npm', ['run', 'build'], nextReleaseNumber);
 cleanReleaseDirectory();
 run('electron-builder', ['--win', '--x64'], nextReleaseNumber);
+keepOnlyReleaseExecutable(nextReleaseNumber);
 
 fs.mkdirSync(path.dirname(releaseNumberPath), { recursive: true });
 fs.writeFileSync(releaseNumberPath, `${nextReleaseNumber}\n`, 'utf8');
 
-console.log(`Windows release ${nextReleaseNumber} complete`);
+console.log(`Windows release ${nextReleaseNumber} complete: ${getReleaseArtifactName(nextReleaseNumber)}`);

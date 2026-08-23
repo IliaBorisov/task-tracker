@@ -58,15 +58,47 @@
   white-space: nowrap;
 }
 
-.projectTitle span:not(.projectSeparator) {
+.projectTitleNumber,
+.projectTitleName {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.projectTitleNumber {
+  flex: 0 1 auto;
+}
+
+.projectTitleName {
+  flex: 1 1 auto;
+}
+
 .projectSeparator {
   flex: 0 0 auto;
   color: var(--color-text-muted);
+}
+
+.projectFolderButton {
+  display: inline-block;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  line-height: inherit;
+  padding: 0;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectFolderButton:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .screenReaderTitle {
@@ -87,7 +119,8 @@
 .calendarButton,
 .editProjectButton,
 .projectCancelButton,
-.projectSaveButton {
+.projectSaveButton,
+.projectFolderChooseButton {
   display: inline-flex;
   height: 34px;
   align-items: center;
@@ -115,7 +148,7 @@
 
 .projectEditForm {
   display: grid;
-  grid-template-columns: minmax(120px, 0.55fr) minmax(180px, 1fr) auto;
+  grid-template-columns: minmax(110px, 0.45fr) minmax(160px, 0.8fr) minmax(220px, 1.2fr) auto;
   align-items: end;
   gap: 10px;
 }
@@ -126,7 +159,7 @@
   gap: 4px;
 }
 
-.projectEditField span {
+.projectEditField > span {
   color: var(--color-text-muted);
   font-size: 0.72rem;
   font-weight: 900;
@@ -137,6 +170,35 @@
 .projectEditField input {
   height: 34px;
   min-width: 0;
+}
+
+.projectFolderField {
+  min-width: 0;
+}
+
+.projectFolderInputGroup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.projectFolderChooseButton {
+  gap: 6px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  padding: 0 10px;
+}
+
+.projectFolderChooseButton:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.projectFolderChooseButton:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .projectEditActions {

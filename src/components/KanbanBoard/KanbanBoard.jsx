@@ -1,4 +1,9 @@
-import { CalendarDays, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
+import {
+  CalendarDays,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import noteIcon from '../../assets/note.svg';
 import { TASK_STATUS, TASK_STATUS_OPTIONS, normalizeTaskStatus } from '../../constants/taskStatus.js';
@@ -7,6 +12,8 @@ import ConfirmDialog from '../ConfirmDialog/ConfirmDialog.jsx';
 import EditTaskDialog from '../EditTaskDialog/EditTaskDialog.jsx';
 import TaskContextMenu from '../TaskContextMenu/TaskContextMenu.jsx';
 import styles from './KanbanBoard.module.css';
+
+const INTERACTIVE_DRAG_SELECTOR = 'button, select, input, textarea, a, [role="button"]';
 
 function getStatusClassName(status) {
   if (status === TASK_STATUS.IN_PROGRESS) {
@@ -92,6 +99,7 @@ function KanbanBoard({
   isLoaded,
   emptyMessage = 'No tasks yet',
   onOpenProject,
+  onOpenProjectFolder,
   onDeleteTask,
   onUpdateTask,
   onReorderTask,
@@ -131,6 +139,11 @@ function KanbanBoard({
   }, [isLoaded, weekGroups]);
 
   function handleDragStart(task, event) {
+    if (event.target.closest(INTERACTIVE_DRAG_SELECTOR)) {
+      event.preventDefault();
+      return;
+    }
+
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', task.id);
     setDraggingTaskId(task.id);
@@ -327,6 +340,7 @@ function KanbanBoard({
 
   function renderTaskCard(task, weekStart, status) {
     const canOpenProject = Boolean(task.projectId && task.projectNumber && onOpenProject);
+    const canOpenProjectFolder = Boolean(task.folderPath && onOpenProjectFolder);
     const isDragging = draggingTaskId === task.id;
     const dueDateLabel = formatDateLabel(task.dueDate);
     const cardDropPosition = dragOverCard?.taskId === task.id ? dragOverCard.position : '';
@@ -371,7 +385,21 @@ function KanbanBoard({
           )}
         </div>
 
-        <h3 className={styles.cardTitle}>{task.projectName}</h3>
+        <h3 className={styles.cardTitle}>
+          {canOpenProjectFolder ? (
+            <button
+              className={styles.cardTitleButton}
+              type="button"
+              onClick={() => onOpenProjectFolder(task.folderPath)}
+              title={task.folderPath}
+              aria-label={`Open folder for ${task.projectName}`}
+            >
+              {task.projectName}
+            </button>
+          ) : (
+            task.projectName
+          )}
+        </h3>
         <p className={styles.cardDescription}>{task.description}</p>
 
         {dueDateLabel ? (

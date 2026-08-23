@@ -42,6 +42,7 @@ function TaskRow({
   isDragging = false,
   onOpenContextMenu,
   onOpenProject,
+  onOpenProjectFolder,
   onRowDragEnd,
   onRowDragLeave,
   onRowDragOver,
@@ -52,6 +53,7 @@ function TaskRow({
   const normalizedStatus = normalizeTaskStatus(task.status);
   const dueDateLabel = formatDateLabel(task.dueDate);
   const canOpenProject = Boolean(task.projectId && task.projectNumber && onOpenProject);
+  const canOpenProjectFolder = Boolean(task.folderPath && onOpenProjectFolder);
   const rowClassNames = [styles.taskRow, getRowStatusStyle(normalizedStatus)];
   const numberCellClassNames = [styles.numberCell];
 
@@ -101,7 +103,19 @@ function TaskRow({
         )}
       </td>
       <td>
-        <span className={styles.projectName}>{task.projectName}</span>
+        {canOpenProjectFolder ? (
+          <button
+            className={styles.projectNameButton}
+            type="button"
+            onClick={() => onOpenProjectFolder(task.folderPath)}
+            title={task.folderPath}
+            aria-label={`Open folder for ${task.projectName}`}
+          >
+            {task.projectName}
+          </button>
+        ) : (
+          <span className={styles.projectName}>{task.projectName}</span>
+        )}
       </td>
       <td>
         <span>{task.description}</span>

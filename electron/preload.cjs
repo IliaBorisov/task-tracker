@@ -7,4 +7,7 @@ contextBridge.exposeInMainWorld('taskDatabase', {
   readSettings: () => ipcRenderer.invoke('tasks:read-settings'),
   writeSettings: (settings) => ipcRenderer.invoke('tasks:write-settings', settings),
   chooseDatabase: () => ipcRenderer.invoke('tasks:choose-database'),
+  chooseProjectFolder: (currentFolderPath) =>
+    ipcRenderer.invoke('tasks:choose-project-folder', currentFolderPath),
+  openProjectFolder: (folderPath) => ipcRenderer.invoke('tasks:open-project-folder', folderPath),
 });

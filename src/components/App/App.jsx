@@ -7,10 +7,12 @@ import TaskTable from '../TaskTable/TaskTable.jsx';
 import { DEFAULT_TASK_STATUS, normalizeTaskStatus } from '../../constants/taskStatus.js';
 import {
   chooseTaskDatabase,
+  chooseProjectFolder,
   getTaskDatabasePath,
   getStoredAppSettings,
   loadAppSettings,
   loadTaskDatabase,
+  openProjectFolder,
   saveAppSettings,
   saveTaskDatabase,
 } from '../../data/taskDatabase.js';
@@ -405,7 +407,17 @@ function getProjectNumberKey(projectNumber) {
   return String(projectNumber || '').trim().toLowerCase();
 }
 
-function normalizeProjectRecord(projectId, projectNumber, projectName, updatedAt = '') {
+function normalizeFolderPath(folderPath) {
+  return typeof folderPath === 'string' ? folderPath.trim() : '';
+}
+
+function normalizeProjectRecord(
+  projectId,
+  projectNumber,
+  projectName,
+  updatedAt = '',
+  folderPath = '',
+) {
   const trimmedProjectId = String(projectId || '').trim();
   const trimmedProjectNumber = String(projectNumber || '').trim();
   const trimmedProjectName = String(projectName || '').trim();
@@ -418,6 +430,7 @@ function normalizeProjectRecord(projectId, projectNumber, projectName, updatedAt
     id: trimmedProjectId,
     projectNumber: trimmedProjectNumber,
     projectName: trimmedProjectName,
+    folderPath: normalizeFolderPath(folderPath),
     updatedAt:
       typeof updatedAt === 'string' && !Number.isNaN(Date.parse(updatedAt)) ? updatedAt : '',
   };
@@ -429,8 +442,15 @@ function upsertProject(
   projectNumber,
   projectName,
   updatedAt = new Date().toISOString(),
+  folderPath = projects?.[projectId]?.folderPath || '',
 ) {
-  const project = normalizeProjectRecord(projectId, projectNumber, projectName, updatedAt);
+  const project = normalizeProjectRecord(
+    projectId,
+    projectNumber,
+    projectName,
+    updatedAt,
+    folderPath,
+  );
 
   if (!project) {
     return projects;
@@ -457,6 +477,7 @@ function normalizeProjects(savedProjects) {
         project.projectNumber,
         project.projectName,
         project.updatedAt,
+        project.folderPath,
       );
     });
   }
@@ -480,6 +501,7 @@ function createProjectIndex(projects, tasks) {
       project.projectNumber,
       project.projectName,
       project.updatedAt,
+      project.folderPath,
     );
 
     if (!normalizedProject) {
@@ -492,6 +514,7 @@ function createProjectIndex(projects, tasks) {
       projectNumber: normalizedProject.projectNumber,
       projectNumberKey,
       projectName: normalizedProject.projectName,
+      folderPath: normalizedProject.folderPath,
       projectNames: [normalizedProject.projectName],
       taskCount: 0,
       latestTime: getTimeValue(normalizedProject.updatedAt),
@@ -534,6 +557,7 @@ function hydrateTasks(tasks, projects) {
       ...task,
       projectNumber: project?.projectNumber || '',
       projectName: project?.projectName || '',
+      folderPath: project?.folderPath || '',
     };
   });
 }
@@ -611,6 +635,7 @@ function App() {
     selectedProject?.projectName ||
     selectedProjectTasks.find((task) => task.projectName)?.projectName ||
     '';
+  const selectedProjectFolderPath = selectedProject?.folderPath || '';
 
   useEffect(() => {
     let isCanceled = false;
@@ -820,7 +845,7 @@ function App() {
     }
   }
 
-  function handleUpdateProject(nextProjectNumber, nextProjectName) {
+  function handleUpdateProject(nextProjectNumber, nextProjectName, nextFolderPath = '') {
     if (!selectedProjectId) {
       return false;
     }
@@ -828,6 +853,7 @@ function App() {
     const nextProjectNumberKey = getProjectNumberKey(nextProjectNumber);
     const trimmedProjectNumber = String(nextProjectNumber || '').trim();
     const trimmedProjectName = String(nextProjectName || '').trim();
+    const trimmedFolderPath = normalizeFolderPath(nextFolderPath);
     const existingProject = projectIndex.lookup.get(nextProjectNumberKey);
 
     if (!trimmedProjectNumber || !trimmedProjectName) {
@@ -847,10 +873,44 @@ function App() {
         trimmedProjectNumber,
         trimmedProjectName,
         updatedAt,
+        trimmedFolderPath,
       ),
     );
 
     return true;
+  }
+
+  async function handleChooseProjectFolder(currentFolderPath = '') {
+    try {
+      const result = await chooseProjectFolder(currentFolderPath);
+
+      if (result.canceled) {
+        return null;
+      }
+
+      setDatabaseError('');
+      return result.folderPath || '';
+    } catch (error) {
+      setDatabaseError(getDatabaseErrorMessage(error, 'Could not choose project folder'));
+      return null;
+    }
+  }
+
+  async function handleOpenProjectFolder(folderPath) {
+    try {
+      const result = await openProjectFolder(folderPath);
+
+      if (result?.ok === false) {
+        setDatabaseError(result.error || 'Could not open project folder');
+        return false;
+      }
+
+      setDatabaseError('');
+      return true;
+    } catch (error) {
+      setDatabaseError(getDatabaseErrorMessage(error, 'Could not open project folder'));
+      return false;
+    }
   }
 
   async function handleChooseDatabase() {
@@ -892,11 +952,14 @@ function App() {
           <ProjectTasksPage
             projectName={selectedProjectName}
             projectNumber={selectedProject?.projectNumber || ''}
+            folderPath={selectedProjectFolderPath}
             projectId={selectedProjectId}
             tasks={selectedProjectTasks}
             isLoaded={isLoaded}
             onBack={() => setSelectedProjectId(null)}
             onDeleteTask={handleDeleteTask}
+            onChooseProjectFolder={handleChooseProjectFolder}
+            onOpenProjectFolder={handleOpenProjectFolder}
             onUpdateProject={handleUpdateProject}
             onUpdateTask={handleUpdateTask}
             onReorderTask={handleReorderTask}
@@ -981,6 +1044,7 @@ function App() {
                   isLoaded={isLoaded}
                   emptyMessage={isSearching ? 'No matching tasks' : 'No tasks yet'}
                   onOpenProject={setSelectedProjectId}
+                  onOpenProjectFolder={handleOpenProjectFolder}
                   onDeleteTask={handleDeleteTask}
                   onUpdateTask={handleUpdateTask}
                   onReorderTask={isSearching ? undefined : handleReorderTask}
@@ -992,6 +1056,7 @@ function App() {
                   isLoaded={isLoaded}
                   emptyMessage={isSearching ? 'No matching tasks' : 'No tasks yet'}
                   onOpenProject={setSelectedProjectId}
+                  onOpenProjectFolder={handleOpenProjectFolder}
                   onDeleteTask={handleDeleteTask}
                   onUpdateTask={handleUpdateTask}
                   onReorderTask={isSearching ? undefined : handleReorderTask}

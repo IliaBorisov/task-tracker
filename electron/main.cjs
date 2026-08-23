@@ -116,6 +116,10 @@ function getProjectNumberKey(projectNumber) {
   return String(projectNumber || '').trim().toLowerCase();
 }
 
+function normalizeFolderPath(folderPath) {
+  return typeof folderPath === 'string' ? folderPath.trim() : '';
+}
+
 function formatDateKey(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -152,6 +156,7 @@ function addProjectRecord(
   projectName,
   updatedAt = '',
   projectId = '',
+  folderPath = '',
 ) {
   const trimmedProjectNumber = String(projectNumber || '').trim();
   const trimmedProjectName = String(projectName || '').trim();
@@ -173,6 +178,7 @@ function addProjectRecord(
     id: normalizedProjectId,
     projectNumber: trimmedProjectNumber,
     projectName: trimmedProjectName,
+    folderPath: normalizeFolderPath(folderPath),
     updatedAt,
   };
   projectIdsByNumber.set(projectNumberKey, normalizedProjectId);
@@ -194,6 +200,7 @@ function normalizeProjects(savedProjects) {
           project.projectName,
           project.updatedAt,
           project.id || projectKey,
+          project.folderPath,
         );
       }
     });
@@ -443,6 +450,58 @@ async function chooseDatabaseFile(browserWindow) {
   };
 }
 
+async function chooseProjectFolder(browserWindow, currentFolderPath = '') {
+  const trimmedFolderPath = normalizeFolderPath(currentFolderPath);
+  const dialogOptions = {
+    title: 'Choose project folder',
+    properties: ['openDirectory', 'createDirectory'],
+  };
+
+  if (trimmedFolderPath) {
+    dialogOptions.defaultPath = trimmedFolderPath;
+  }
+
+  const result = browserWindow
+    ? await dialog.showOpenDialog(browserWindow, dialogOptions)
+    : await dialog.showOpenDialog(dialogOptions);
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return {
+      canceled: true,
+      folderPath: trimmedFolderPath,
+    };
+  }
+
+  return {
+    canceled: false,
+    folderPath: result.filePaths[0],
+  };
+}
+
+async function openProjectFolder(folderPath) {
+  const trimmedFolderPath = normalizeFolderPath(folderPath);
+
+  if (!trimmedFolderPath) {
+    return {
+      ok: false,
+      error: 'Project folder path is empty.',
+    };
+  }
+
+  const errorMessage = await shell.openPath(trimmedFolderPath);
+
+  if (errorMessage) {
+    return {
+      ok: false,
+      error: errorMessage,
+    };
+  }
+
+  return {
+    ok: true,
+  };
+}
+
 function registerTaskDatabaseHandlers() {
   ipcMain.handle('tasks:read-database', readTaskDatabase);
   ipcMain.handle('tasks:write-database', (_event, database) => writeTaskDatabase(database));
@@ -451,6 +510,12 @@ function registerTaskDatabaseHandlers() {
   ipcMain.handle('tasks:write-settings', (_event, settings) => writeAppSettings(settings));
   ipcMain.handle('tasks:choose-database', (event) => {
     return chooseDatabaseFile(BrowserWindow.fromWebContents(event.sender));
+  });
+  ipcMain.handle('tasks:choose-project-folder', (event, currentFolderPath) => {
+    return chooseProjectFolder(BrowserWindow.fromWebContents(event.sender), currentFolderPath);
+  });
+  ipcMain.handle('tasks:open-project-folder', (_event, folderPath) => {
+    return openProjectFolder(folderPath);
   });
 }
 

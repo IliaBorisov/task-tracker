@@ -1,4 +1,13 @@
-import { ArrowLeft, CalendarDays, Check, ChevronLeft, ChevronRight, Pencil, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  CalendarDays,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  FolderOpen,
+  Pencil,
+  X,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import TaskTable from '../TaskTable/TaskTable.jsx';
 import { TASK_STATUS, normalizeTaskStatus } from '../../constants/taskStatus.js';
@@ -17,6 +26,10 @@ const WORKED_WEEK_STATUS_PRIORITY = {
 
 function getProjectNumberKey(projectNumber) {
   return String(projectNumber || '').trim().toLowerCase();
+}
+
+function normalizeFolderPath(folderPath) {
+  return typeof folderPath === 'string' ? folderPath.trim() : '';
 }
 
 function getCurrentYear() {
@@ -95,13 +108,16 @@ function getWorkedWeekStatusClassName(status) {
 
 function ProjectTasksPage({
   projectId,
+  folderPath,
   projectName,
   projectNumber,
   tasks,
   isLoaded,
   projectLookup = EMPTY_PROJECT_LOOKUP,
   onBack,
+  onChooseProjectFolder,
   onDeleteTask,
+  onOpenProjectFolder,
   onUpdateProject,
   onUpdateTask,
   onReorderTask,
@@ -110,10 +126,13 @@ function ProjectTasksPage({
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [calendarYear, setCalendarYear] = useState(getCurrentYear);
   const [projectDraft, setProjectDraft] = useState({
+    folderPath: normalizeFolderPath(folderPath),
     projectNumber: projectNumber || '',
     projectName: projectName || '',
   });
   const [projectEditError, setProjectEditError] = useState('');
+  const projectFolderPath = normalizeFolderPath(folderPath);
+  const canOpenProjectFolder = Boolean(projectFolderPath && onOpenProjectFolder);
   const draftProjectNumberKey = getProjectNumberKey(projectDraft.projectNumber);
   const existingProjectWithDraftNumber = projectLookup.get(draftProjectNumberKey);
   const hasDuplicateProjectNumber =
@@ -137,15 +156,17 @@ function ProjectTasksPage({
 
   useEffect(() => {
     setProjectDraft({
+      folderPath: normalizeFolderPath(folderPath),
       projectNumber: projectNumber || '',
       projectName: projectName || '',
     });
     setIsEditingProject(false);
     setProjectEditError('');
-  }, [projectName, projectNumber]);
+  }, [folderPath, projectName, projectNumber]);
 
   function handleStartProjectEdit() {
     setProjectDraft({
+      folderPath: normalizeFolderPath(folderPath),
       projectNumber: projectNumber || '',
       projectName: projectName || '',
     });
@@ -160,6 +181,7 @@ function ProjectTasksPage({
 
   function handleCancelProjectEdit() {
     setProjectDraft({
+      folderPath: normalizeFolderPath(folderPath),
       projectNumber: projectNumber || '',
       projectName: projectName || '',
     });
@@ -182,6 +204,7 @@ function ProjectTasksPage({
     const didUpdate = onUpdateProject?.(
       projectDraft.projectNumber.trim(),
       projectDraft.projectName.trim(),
+      normalizeFolderPath(projectDraft.folderPath),
     );
 
     if (didUpdate === false) {
@@ -191,6 +214,27 @@ function ProjectTasksPage({
 
     setProjectEditError('');
     setIsEditingProject(false);
+  }
+
+  async function handleChooseProjectFolder() {
+    const selectedFolderPath = await onChooseProjectFolder?.(projectDraft.folderPath);
+
+    if (selectedFolderPath === null || selectedFolderPath === undefined) {
+      return;
+    }
+
+    setProjectDraft((currentDraft) => ({
+      ...currentDraft,
+      folderPath: selectedFolderPath,
+    }));
+  }
+
+  function handleOpenProjectFolder() {
+    if (!projectFolderPath) {
+      return;
+    }
+
+    onOpenProjectFolder?.(projectFolderPath);
   }
 
   return (
@@ -233,6 +277,34 @@ function ProjectTasksPage({
                   aria-label="Project name"
                 />
               </label>
+              <label className={`${styles.projectEditField} ${styles.projectFolderField}`}>
+                <span>Folder</span>
+                <div className={styles.projectFolderInputGroup}>
+                  <input
+                    value={projectDraft.folderPath}
+                    onChange={(event) =>
+                      setProjectDraft((currentDraft) => ({
+                        ...currentDraft,
+                        folderPath: event.target.value,
+                      }))
+                    }
+                    placeholder="/Users/name/Projects/example"
+                    aria-label="Project folder path"
+                  />
+                  {onChooseProjectFolder ? (
+                    <button
+                      className={styles.projectFolderChooseButton}
+                      type="button"
+                      onClick={handleChooseProjectFolder}
+                      aria-label="Choose project folder"
+                      title="Choose project folder"
+                    >
+                      <FolderOpen size={16} aria-hidden="true" />
+                      <span>Choose</span>
+                    </button>
+                  ) : null}
+                </div>
+              </label>
               <div className={styles.projectEditActions}>
                 <button
                   className={styles.projectCancelButton}
@@ -261,13 +333,25 @@ function ProjectTasksPage({
             </form>
           ) : (
             <h2 className={styles.projectTitle} id="project-page-title">
-              <span>{projectNumber}</span>
+              <span className={styles.projectTitleNumber}>{projectNumber}</span>
               {projectName ? (
                 <>
                   <span className={styles.projectSeparator} aria-hidden="true">
                     •
                   </span>
-                  <span>{projectName}</span>
+                  {canOpenProjectFolder ? (
+                    <button
+                      className={styles.projectFolderButton}
+                      type="button"
+                      onClick={handleOpenProjectFolder}
+                      title={projectFolderPath}
+                      aria-label={`Open folder for ${projectName}`}
+                    >
+                      {projectName}
+                    </button>
+                  ) : (
+                    <span className={styles.projectTitleName}>{projectName}</span>
+                  )}
                 </>
               ) : null}
             </h2>
@@ -304,6 +388,7 @@ function ProjectTasksPage({
         tasks={tasks}
         isLoaded={isLoaded}
         onDeleteTask={onDeleteTask}
+        onOpenProjectFolder={onOpenProjectFolder}
         onUpdateTask={onUpdateTask}
         onReorderTask={onReorderTask}
         showDatabaseFooter={false}

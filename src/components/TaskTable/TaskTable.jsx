@@ -151,6 +151,7 @@ function TaskTable({
   isLoaded,
   databasePath,
   onOpenProject,
+  onOpenProjectFolder,
   onChooseDatabase,
   onDeleteTask,
   onUpdateTask,
@@ -571,6 +572,7 @@ function TaskTable({
                               isDragging={draggingTaskId === task.id}
                               onOpenContextMenu={handleOpenContextMenu}
                               onOpenProject={onOpenProject}
+                              onOpenProjectFolder={onOpenProjectFolder}
                               onRowDragStart={
                                 canReorderTasks ? handleRowDragStart : undefined
                               }

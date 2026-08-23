@@ -26,3 +26,4 @@ npm run dist:win
 ```
 
 The Windows release number is stored in `build/release-number.txt` and increases by 1 after each successful Windows build.
+Each Windows release produces one installer named `TaskTracker-vN.exe`.

@@ -50,20 +50,43 @@
   cursor: grabbing;
 }
 
-.projectName {
+.projectName,
+.projectNameButton {
   color: var(--color-text);
   font-weight: 800;
 }
 
+.projectNameButton {
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0;
+  text-align: left;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.projectNameButton:focus-visible {
+  border-radius: var(--radius-control);
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
 .projectNumber {
-  color: var(--color-primary);
+  color: var(--color-text);
   font-weight: 900;
 }
 
 .projectNumberButton {
   border: 0;
   background: transparent;
-  color: var(--color-primary);
+  color: var(--color-text);
   cursor: pointer;
   font: inherit;
   font-weight: 900;
@@ -72,7 +95,7 @@
 }
 
 .projectNumberButton:hover {
-  color: var(--color-primary-hover);
+  color: var(--color-text);
 }
 
 .projectNumberButton:focus-visible {

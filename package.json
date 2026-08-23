@@ -23,18 +23,14 @@
     ],
     "win": {
       "target": [
-        "nsis",
-        "portable"
+        "nsis"
       ]
     },
     "nsis": {
       "guid": "4d887ba5-f89a-5609-95eb-1d872e27e174",
-      "artifactName": "${productName}-Setup-${env.RELEASE_NUMBER}-${arch}.${ext}",
+      "artifactName": "TaskTracker-v${env.RELEASE_NUMBER}.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
-    },
-    "portable": {
-      "artifactName": "${productName}-Portable-${env.RELEASE_NUMBER}-${arch}.${ext}"
     }
   },
   "dependencies": {

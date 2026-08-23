@@ -236,7 +236,7 @@
   max-width: 100%;
   min-width: 0;
   overflow: hidden;
-  color: var(--color-primary);
+  color: var(--color-text);
   font-size: 0.82rem;
   font-weight: 900;
   text-overflow: ellipsis;
@@ -251,7 +251,7 @@
 }
 
 .projectButton:hover {
-  color: var(--color-primary-hover);
+  color: var(--color-text);
 }
 
 .projectButton:focus-visible {
@@ -269,6 +269,29 @@
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.cardTitleButton {
+  display: inline-block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  line-height: inherit;
+  padding: 0;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardTitleButton:focus-visible {
+  border-radius: var(--radius-control);
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .cardDescription,

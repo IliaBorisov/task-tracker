@@ -189,3 +189,29 @@ export async function chooseTaskDatabase() {
     tasks: {},
   };
 }
+
+export async function chooseProjectFolder(currentFolderPath = '') {
+  const database = getElectronDatabase();
+
+  if (database?.chooseProjectFolder) {
+    return database.chooseProjectFolder(currentFolderPath);
+  }
+
+  return {
+    canceled: true,
+    folderPath: '',
+  };
+}
+
+export async function openProjectFolder(folderPath) {
+  const database = getElectronDatabase();
+
+  if (database?.openProjectFolder) {
+    return database.openProjectFolder(folderPath);
+  }
+
+  return {
+    ok: false,
+    error: 'Project folders can only be opened in the desktop app.',
+  };
+}
