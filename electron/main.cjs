@@ -479,6 +479,7 @@ async function chooseProjectFolder(browserWindow, currentFolderPath = '') {
 }
 
 async function openProjectFolder(folderPath) {
+  // Keep this path read-only: validate, open with shell.openPath, then return.
   const trimmedFolderPath = normalizeFolderPath(folderPath);
 
   if (!trimmedFolderPath) {
