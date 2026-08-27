@@ -35,9 +35,21 @@ function getRowStatusStyle(status) {
   return styles.rowNotStarted;
 }
 
+function getWeekLabelParts(weekLabel) {
+  const [weekPart, ...dateParts] = String(weekLabel || '').split(',');
+
+  return {
+    week: weekPart ? `${weekPart.trim()},` : '',
+    date: dateParts.join(',').trim(),
+  };
+}
+
 function TaskRow({
   task,
   rowNumber,
+  showWeekColumn = false,
+  isCurrentWeek = false,
+  weekLabel = '',
   dropPosition = '',
   isDragging = false,
   onOpenContextMenu,
@@ -52,6 +64,7 @@ function TaskRow({
 }) {
   const normalizedStatus = normalizeTaskStatus(task.status);
   const dueDateLabel = formatDateLabel(task.dueDate);
+  const weekLabelParts = getWeekLabelParts(weekLabel);
   const canOpenProject = Boolean(task.projectId && task.projectNumber && onOpenProject);
   const canOpenProjectFolder = Boolean(task.folderPath && onOpenProjectFolder);
   const rowClassNames = [styles.taskRow, getRowStatusStyle(normalizedStatus)];
@@ -87,8 +100,18 @@ function TaskRow({
         draggable={Boolean(onRowDragStart)}
         onDragStart={onRowDragStart ? (event) => onRowDragStart(task, event) : undefined}
       >
-        {rowNumber}
+        <span>{rowNumber}</span>
       </td>
+      {showWeekColumn ? (
+        <td className={`${styles.weekCell} ${isCurrentWeek ? styles.currentWeekCell : ''}`}>
+          {weekLabelParts.week ? (
+            <span className={styles.weekLabel}>
+              <span>{weekLabelParts.week}</span>
+              {weekLabelParts.date ? <span>{weekLabelParts.date}</span> : null}
+            </span>
+          ) : null}
+        </td>
+      ) : null}
       <td>
         {canOpenProject ? (
           <button
@@ -117,8 +140,8 @@ function TaskRow({
           <span className={styles.projectName}>{task.projectName}</span>
         )}
       </td>
-      <td>
-        <span>{task.description}</span>
+      <td className={styles.descriptionCell}>
+        <span className={styles.taskDescription}>{task.description}</span>
         {task.note ? (
           <p className={styles.taskNote}>
             <img className={styles.noteIcon} src={noteIcon} alt="" aria-hidden="true" />

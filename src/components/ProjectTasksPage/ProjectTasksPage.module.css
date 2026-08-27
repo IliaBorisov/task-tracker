@@ -71,6 +71,7 @@
 
 .projectTitleName {
   flex: 1 1 auto;
+  font-weight: 800;
 }
 
 .projectSeparator {
@@ -88,6 +89,7 @@
   color: inherit;
   cursor: pointer;
   font: inherit;
+  font-weight: 800;
   line-height: inherit;
   padding: 0;
   text-align: left;

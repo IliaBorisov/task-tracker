@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import KanbanBoard from '../KanbanBoard/KanbanBoard.jsx';
+import ProjectList from '../ProjectList/ProjectList.jsx';
 import ProjectTasksPage from '../ProjectTasksPage/ProjectTasksPage.jsx';
 import TaskLibrary, { TASK_LIBRARY_TABS } from '../TaskLibrary/TaskLibrary.jsx';
 import TaskTable from '../TaskTable/TaskTable.jsx';
@@ -562,9 +563,30 @@ function hydrateTasks(tasks, projects) {
   });
 }
 
+const PROJECT_LIST_SORTER = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: 'base',
+});
+
+function compareProjectsByNumberThenName(firstProject, secondProject) {
+  return (
+    PROJECT_LIST_SORTER.compare(firstProject.projectNumber, secondProject.projectNumber) ||
+    PROJECT_LIST_SORTER.compare(firstProject.projectName, secondProject.projectName)
+  );
+}
+
+function filterProjectsForTasks(projects, tasks) {
+  const taskProjectIds = new Set(tasks.map((task) => task.projectId).filter(Boolean));
+
+  return projects
+    .filter((project) => taskProjectIds.has(project.projectId))
+    .sort(compareProjectsByNumberThenName);
+}
+
 const TASK_VIEW = {
   TABLE: 'table',
   KANBAN: 'kanban',
+  PROJECTS: 'projects',
 };
 
 function normalizeTaskView(taskView) {
@@ -620,9 +642,14 @@ function App() {
   }, [searchTokens, taskViews]);
   const displayedTasks =
     activeLibraryTab === TASK_LIBRARY_TABS.SEARCH ? searchResultTasks : taskViews;
+  const displayedProjects = useMemo(
+    () => filterProjectsForTasks(projectIndex.suggestions, displayedTasks),
+    [displayedTasks, projectIndex.suggestions],
+  );
   const isSearching =
     activeLibraryTab === TASK_LIBRARY_TABS.SEARCH && searchTokens.length > 0;
   const isKanbanView = activeTaskView === TASK_VIEW.KANBAN;
+  const isProjectsView = activeTaskView === TASK_VIEW.PROJECTS;
   const selectedProject = selectedProjectId ? normalizedProjects[selectedProjectId] : null;
   const selectedProjectTasks = useMemo(
     () =>
@@ -996,11 +1023,11 @@ function App() {
               >
                 <button
                   className={`${styles.taskViewTab} ${
-                    isKanbanView ? '' : styles.activeTaskViewTab
+                    activeTaskView === TASK_VIEW.TABLE ? styles.activeTaskViewTab : ''
                   }`}
                   type="button"
                   role="tab"
-                  aria-selected={!isKanbanView}
+                  aria-selected={activeTaskView === TASK_VIEW.TABLE}
                   onClick={() => setActiveTaskView(TASK_VIEW.TABLE)}
                 >
                   Table
@@ -1015,6 +1042,17 @@ function App() {
                   onClick={() => setActiveTaskView(TASK_VIEW.KANBAN)}
                 >
                   Kanban
+                </button>
+                <button
+                  className={`${styles.taskViewTab} ${
+                    isProjectsView ? styles.activeTaskViewTab : ''
+                  }`}
+                  type="button"
+                  role="tab"
+                  aria-selected={isProjectsView}
+                  onClick={() => setActiveTaskView(TASK_VIEW.PROJECTS)}
+                >
+                  Projects
                 </button>
               </div>
               <div className={styles.yearSwitcher} aria-label="Task year">
@@ -1038,7 +1076,18 @@ function App() {
               </div>
             </div>
             <div className={styles.taskViewContent}>
-              {isKanbanView ? (
+              {isProjectsView ? (
+                <ProjectList
+                  projects={displayedProjects}
+                  tasks={displayedTasks}
+                  isLoaded={isLoaded}
+                  emptyMessage={isSearching ? 'No matching projects' : 'No projects this year'}
+                  onOpenProject={setSelectedProjectId}
+                  onOpenProjectFolder={handleOpenProjectFolder}
+                  onDeleteTask={handleDeleteTask}
+                  onUpdateTask={handleUpdateTask}
+                />
+              ) : isKanbanView ? (
                 <KanbanBoard
                   tasks={displayedTasks}
                   isLoaded={isLoaded}

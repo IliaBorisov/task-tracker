@@ -1,0 +1,298 @@
+.projectPanel {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+}
+
+.projectTableScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.projectTable {
+  width: 100%;
+  min-width: 1010px;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  table-layout: fixed;
+}
+
+.projectTable th,
+.projectTable td {
+  border-bottom: 1px solid var(--color-border);
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.projectTable th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  border-right: 1px solid var(--color-table-header-border);
+  border-bottom-color: var(--color-table-header-border);
+  background: var(--color-table-header);
+  color: var(--color-table-header-text);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.projectTable th:first-child {
+  text-align: center;
+}
+
+.projectTable th:last-child {
+  border-right: 0;
+}
+
+.projectTable td {
+  color: var(--color-text);
+}
+
+.projectTable tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.rowNumberColumn {
+  width: 72px;
+}
+
+.weekColumn {
+  width: 132px;
+}
+
+.projectCodeColumn {
+  width: 126px;
+}
+
+.projectNameColumn {
+  width: 220px;
+}
+
+.descriptionColumn {
+  width: auto;
+}
+
+.dueDateColumn {
+  width: 132px;
+}
+
+.statusColumn {
+  width: 120px;
+}
+
+.projectRow td {
+  height: 39px;
+  background: var(--color-table-header);
+  color: var(--color-text);
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.projectRow:hover td {
+  background: var(--color-primary-soft);
+}
+
+.projectIndexCell {
+  padding: 0;
+  text-align: center;
+}
+
+.expandButton {
+  display: inline-flex;
+  width: 100%;
+  min-height: 29px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 900;
+  padding: 0 4px;
+}
+
+.expandButton:hover {
+  color: var(--color-primary);
+}
+
+.expandButton:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
+.projectNumber,
+.projectNumberButton {
+  color: var(--color-text);
+  font-weight: 900;
+}
+
+.projectName,
+.projectNameButton {
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.projectNameButton {
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0;
+  text-align: left;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.projectNumberButton {
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+  padding: 0;
+  text-align: left;
+}
+
+.projectNumberButton:hover,
+.projectNameButton:hover {
+  color: var(--color-text);
+}
+
+.projectNumberButton:focus-visible,
+.projectNameButton:focus-visible {
+  border-radius: var(--radius-control);
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.projectNumber,
+.projectNumberButton,
+.projectName,
+.projectNameButton {
+  border-radius: 7px;
+  margin: -2px -4px;
+  padding: 2px 4px;
+  transition:
+    background 140ms ease,
+    box-shadow 140ms ease,
+    color 140ms ease;
+}
+
+.projectNumber:hover,
+.projectNumberButton:hover,
+.projectName:hover,
+.projectNameButton:hover {
+  background: var(--color-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  color: var(--color-primary);
+}
+
+.projectTaskSummary {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.emptyState {
+  height: 132px;
+  color: var(--color-text-muted);
+  font-weight: 800;
+  text-align: center;
+}
+
+.emptyProjectTasksCell {
+  height: 40px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.projectFooter {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 7px 12px;
+}
+
+.projectStats {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.projectActions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.projectToggleButton {
+  display: inline-flex;
+  height: 26px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 900;
+  padding: 0 8px;
+}
+
+.projectToggleButton:hover {
+  background: var(--color-primary-soft);
+}
+
+.projectToggleButton:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 1px;
+}
+
+@media (max-width: 760px) {
+  .projectTable {
+    min-width: 960px;
+  }
+
+  .projectFooter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

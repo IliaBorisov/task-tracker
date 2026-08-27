@@ -156,6 +156,7 @@ function TaskTable({
   onDeleteTask,
   onUpdateTask,
   onReorderTask,
+  defaultCollapseToCurrentWeek = true,
   emptyMessage = 'No tasks yet',
   showDatabaseFooter = true,
   tableLabel = 'Task table',
@@ -235,7 +236,7 @@ function TaskTable({
   }, [minimumTableWidth]);
 
   useEffect(() => {
-    if (!isLoaded || didApplyDefaultWeekCollapseRef.current) {
+    if (!defaultCollapseToCurrentWeek || !isLoaded || didApplyDefaultWeekCollapseRef.current) {
       return;
     }
 
@@ -247,7 +248,7 @@ function TaskTable({
 
     didApplyDefaultWeekCollapseRef.current = true;
     setCollapsedWeekStarts(nextCollapsedWeekStarts);
-  }, [groupedTasks, isLoaded]);
+  }, [defaultCollapseToCurrentWeek, groupedTasks, isLoaded]);
 
   function handleResizeStart(columnId, event) {
     if (event.button !== undefined && event.button !== 0) {

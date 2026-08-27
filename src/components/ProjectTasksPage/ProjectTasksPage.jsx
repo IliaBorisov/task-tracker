@@ -391,6 +391,7 @@ function ProjectTasksPage({
         onOpenProjectFolder={onOpenProjectFolder}
         onUpdateTask={onUpdateTask}
         onReorderTask={onReorderTask}
+        defaultCollapseToCurrentWeek={false}
         showDatabaseFooter={false}
         tableLabel={`Tasks for project ${projectNumber}`}
       />

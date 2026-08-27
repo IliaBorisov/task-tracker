@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, screen, shell } = require('electron');
 const { randomUUID } = require('node:crypto');
 const fs = require('node:fs/promises');
 const path = require('node:path');
@@ -8,6 +8,15 @@ let mainWindow = null;
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 const DEFAULT_TASK_VIEW = 'table';
 const TASK_VIEW_VALUES = new Set([DEFAULT_TASK_VIEW, 'kanban']);
+const DEFAULT_WINDOW_WIDTH = 1040;
+const DEFAULT_WINDOW_HEIGHT = 720;
+const MIN_WINDOW_WIDTH = 760;
+const MIN_WINDOW_HEIGHT = 540;
+const MIN_VISIBLE_WINDOW_WIDTH = 120;
+const MIN_VISIBLE_WINDOW_HEIGHT = 80;
+const WINDOW_STATE_SAVE_DELAY = 300;
+let settingsWriteQueue = Promise.resolve();
+let windowStateSaveTimeout = null;
 
 function getDefaultDatabasePath() {
   return path.join(app.getPath('userData'), 'tasks.json');
@@ -40,6 +49,27 @@ async function writeSettings(settings) {
   await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
 }
 
+function isPlainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
+}
+
+async function updateSettings(createNextSettings) {
+  const nextWrite = settingsWriteQueue
+    .catch(() => {})
+    .then(async () => {
+      const currentSettings = await readSettings();
+      const nextSettings = createNextSettings(currentSettings);
+
+      await writeSettings(isPlainObject(nextSettings) ? nextSettings : currentSettings);
+
+      return isPlainObject(nextSettings) ? nextSettings : currentSettings;
+    });
+
+  settingsWriteQueue = nextWrite;
+
+  return nextWrite;
+}
+
 function normalizeDefaultTaskView(defaultTaskView) {
   return TASK_VIEW_VALUES.has(defaultTaskView) ? defaultTaskView : DEFAULT_TASK_VIEW;
 }
@@ -59,21 +89,22 @@ async function readAppSettings() {
 }
 
 async function writeAppSettings(settings) {
-  const currentSettings = await readSettings();
   const updates =
     settings && typeof settings === 'object' && !Array.isArray(settings) ? settings : {};
-  const nextSettings = { ...currentSettings };
+  const nextSettings = await updateSettings((currentSettings) => {
+    const mergedSettings = { ...currentSettings };
 
-  if (Object.prototype.hasOwnProperty.call(updates, 'databasePath')) {
-    nextSettings.databasePath =
-      typeof updates.databasePath === 'string' ? updates.databasePath : '';
-  }
+    if (Object.prototype.hasOwnProperty.call(updates, 'databasePath')) {
+      mergedSettings.databasePath =
+        typeof updates.databasePath === 'string' ? updates.databasePath : '';
+    }
 
-  if (Object.prototype.hasOwnProperty.call(updates, 'defaultTaskView')) {
-    nextSettings.defaultTaskView = normalizeDefaultTaskView(updates.defaultTaskView);
-  }
+    if (Object.prototype.hasOwnProperty.call(updates, 'defaultTaskView')) {
+      mergedSettings.defaultTaskView = normalizeDefaultTaskView(updates.defaultTaskView);
+    }
 
-  await writeSettings(nextSettings);
+    return mergedSettings;
+  });
 
   return normalizeAppSettings(nextSettings);
 }
@@ -89,12 +120,10 @@ async function getDatabasePath() {
 }
 
 async function setDatabasePath(databasePath) {
-  const settings = await readSettings();
-
-  await writeSettings({
+  await updateSettings((settings) => ({
     ...settings,
     databasePath,
-  });
+  }));
 }
 
 function createDatabaseReadError(databasePath, reason) {
@@ -532,12 +561,208 @@ function focusMainWindow() {
   mainWindow.focus();
 }
 
-function createWindow() {
+function normalizeWindowState(windowState) {
+  if (!isPlainObject(windowState)) {
+    return null;
+  }
+
+  const width = Number.isFinite(windowState.width)
+    ? Math.round(windowState.width)
+    : DEFAULT_WINDOW_WIDTH;
+  const height = Number.isFinite(windowState.height)
+    ? Math.round(windowState.height)
+    : DEFAULT_WINDOW_HEIGHT;
+  const normalizedState = {
+    width: Math.max(MIN_WINDOW_WIDTH, width),
+    height: Math.max(MIN_WINDOW_HEIGHT, height),
+    isMaximized: windowState.isMaximized === true,
+  };
+
+  if (Number.isFinite(windowState.x) && Number.isFinite(windowState.y)) {
+    normalizedState.x = Math.round(windowState.x);
+    normalizedState.y = Math.round(windowState.y);
+  }
+
+  return normalizedState;
+}
+
+function getWindowOverlap(bounds, workArea) {
+  const left = Math.max(bounds.x, workArea.x);
+  const right = Math.min(bounds.x + bounds.width, workArea.x + workArea.width);
+  const top = Math.max(bounds.y, workArea.y);
+  const bottom = Math.min(bounds.y + bounds.height, workArea.y + workArea.height);
+
+  return {
+    width: Math.max(0, right - left),
+    height: Math.max(0, bottom - top),
+  };
+}
+
+function isWindowStateVisible(windowState, display) {
+  if (!Number.isFinite(windowState.x) || !Number.isFinite(windowState.y)) {
+    return false;
+  }
+
+  const overlap = getWindowOverlap(windowState, display.workArea);
+
+  return (
+    overlap.width >= MIN_VISIBLE_WINDOW_WIDTH &&
+    overlap.height >= MIN_VISIBLE_WINDOW_HEIGHT
+  );
+}
+
+function getDisplayForWindowState(windowState) {
+  const displays = screen.getAllDisplays();
+
+  return (
+    displays.find((display) => isWindowStateVisible(windowState, display)) ||
+    screen.getPrimaryDisplay()
+  );
+}
+
+function clampWindowStateToDisplay(windowState, display) {
+  const workArea = display.workArea;
+  const width = Math.max(
+    MIN_WINDOW_WIDTH,
+    Math.min(windowState.width, workArea.width),
+  );
+  const height = Math.max(
+    MIN_WINDOW_HEIGHT,
+    Math.min(windowState.height, workArea.height),
+  );
+  const maxX = workArea.x + Math.max(0, workArea.width - width);
+  const maxY = workArea.y + Math.max(0, workArea.height - height);
+
+  return {
+    x: Math.min(Math.max(windowState.x, workArea.x), maxX),
+    y: Math.min(Math.max(windowState.y, workArea.y), maxY),
+    width,
+    height,
+  };
+}
+
+function centerWindowStateOnDisplay(windowState, display) {
+  const workArea = display.workArea;
+  const width = Math.max(
+    MIN_WINDOW_WIDTH,
+    Math.min(windowState.width, workArea.width),
+  );
+  const height = Math.max(
+    MIN_WINDOW_HEIGHT,
+    Math.min(windowState.height, workArea.height),
+  );
+
+  return {
+    x: Math.round(workArea.x + (workArea.width - width) / 2),
+    y: Math.round(workArea.y + (workArea.height - height) / 2),
+    width,
+    height,
+  };
+}
+
+function getRestoredWindowOptions(settings) {
+  const windowState = normalizeWindowState(settings.windowState);
+
+  if (!windowState) {
+    return {
+      bounds: {
+        width: DEFAULT_WINDOW_WIDTH,
+        height: DEFAULT_WINDOW_HEIGHT,
+      },
+      isMaximized: false,
+    };
+  }
+
+  const display = getDisplayForWindowState(windowState);
+  const bounds = isWindowStateVisible(windowState, display)
+    ? clampWindowStateToDisplay(windowState, display)
+    : centerWindowStateOnDisplay(windowState, display);
+
+  return {
+    bounds,
+    isMaximized: windowState.isMaximized,
+  };
+}
+
+function getWindowStateForSave(browserWindow) {
+  if (!browserWindow || browserWindow.isDestroyed()) {
+    return null;
+  }
+
+  const bounds =
+    typeof browserWindow.getNormalBounds === 'function'
+      ? browserWindow.getNormalBounds()
+      : browserWindow.getBounds();
+
+  return normalizeWindowState({
+    ...bounds,
+    isMaximized: browserWindow.isMaximized(),
+  });
+}
+
+async function saveWindowState(browserWindow) {
+  const windowState = getWindowStateForSave(browserWindow);
+
+  if (!windowState) {
+    return;
+  }
+
+  await updateSettings((settings) => ({
+    ...settings,
+    windowState,
+  }));
+}
+
+function scheduleWindowStateSave(browserWindow) {
+  if (windowStateSaveTimeout) {
+    clearTimeout(windowStateSaveTimeout);
+  }
+
+  windowStateSaveTimeout = setTimeout(() => {
+    windowStateSaveTimeout = null;
+    saveWindowState(browserWindow).catch((error) => {
+      console.error('Failed to save window state:', error);
+    });
+  }, WINDOW_STATE_SAVE_DELAY);
+}
+
+function registerWindowStateHandlers(browserWindow) {
+  let isClosingAfterStateSave = false;
+
+  browserWindow.on('resize', () => scheduleWindowStateSave(browserWindow));
+  browserWindow.on('move', () => scheduleWindowStateSave(browserWindow));
+  browserWindow.on('maximize', () => scheduleWindowStateSave(browserWindow));
+  browserWindow.on('unmaximize', () => scheduleWindowStateSave(browserWindow));
+  browserWindow.on('close', (event) => {
+    if (isClosingAfterStateSave) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (windowStateSaveTimeout) {
+      clearTimeout(windowStateSaveTimeout);
+      windowStateSaveTimeout = null;
+    }
+
+    saveWindowState(browserWindow)
+      .catch((error) => {
+        console.error('Failed to save window state:', error);
+      })
+      .finally(() => {
+        isClosingAfterStateSave = true;
+        browserWindow.destroy();
+      });
+  });
+}
+
+async function createWindow() {
+  const restoredWindowOptions = getRestoredWindowOptions(await readSettings());
+
   mainWindow = new BrowserWindow({
-    width: 1040,
-    height: 720,
-    minWidth: 760,
-    minHeight: 540,
+    ...restoredWindowOptions.bounds,
+    minWidth: MIN_WINDOW_WIDTH,
+    minHeight: MIN_WINDOW_HEIGHT,
     title: 'Task Tracker',
     backgroundColor: '#f5f1e8',
     webPreferences: {
@@ -546,6 +771,12 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.cjs'),
     },
   });
+
+  registerWindowStateHandlers(mainWindow);
+
+  if (restoredWindowOptions.isMaximized) {
+    mainWindow.maximize();
+  }
 
   if (isDev && process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
@@ -568,9 +799,9 @@ if (!gotSingleInstanceLock) {
 } else {
   app.on('second-instance', focusMainWindow);
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     registerTaskDatabaseHandlers();
-    createWindow();
+    await createWindow();
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {

@@ -106,6 +106,7 @@
 
 .suggestionOption span:last-child {
   color: var(--color-text-soft);
+  font-weight: 800;
 }
 
 .primaryButton {
