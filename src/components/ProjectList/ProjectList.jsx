@@ -1,28 +1,18 @@
-import { CalendarDays, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
-import { Fragment, useMemo, useState } from 'react';
+import { ArrowDown, ArrowUp, CalendarDays, ChevronDown, ChevronRight, ChevronUp, FolderOpen } from 'lucide-react';
+import { useId, useMemo, useState } from 'react';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog.jsx';
 import EditTaskDialog from '../EditTaskDialog/EditTaskDialog.jsx';
 import TaskContextMenu from '../TaskContextMenu/TaskContextMenu.jsx';
 import TaskRow from '../TaskRow/TaskRow.jsx';
+import ProjectTreeNode from '../ProjectTreeNode/ProjectTreeNode.jsx';
+import useTaskRowDrag from '../TaskRow/useTaskRowDrag.js';
+import treeStyles from '../TaskTree/TaskTree.module.css';
 import { formatWeekLabel, getMondayWeekStartKey } from '../../utils/week.js';
+import { compareProjects, PROJECT_SORT_OPTIONS } from './projectSort.js';
 import styles from './ProjectList.module.css';
-
-const PROJECT_COLUMNS = [
-  { id: 'rowNumber', label: 'No' },
-  { id: 'week', label: 'Week' },
-  { id: 'projectCode', label: 'Number' },
-  { id: 'projectName', label: 'Name' },
-  { id: 'description', label: 'Description' },
-  { id: 'dueDate', label: 'Due' },
-  { id: 'status', label: 'Status' },
-];
 
 function getCountLabel(count, singularLabel, pluralLabel) {
   return `${count} ${count === 1 ? singularLabel : pluralLabel}`;
-}
-
-function getProjectLabel(project) {
-  return [project.projectNumber, project.projectName].filter(Boolean).join(' - ');
 }
 
 function getTaskWeekStart(task) {
@@ -38,7 +28,7 @@ function groupProjectTasksByWeek(tasks) {
     if (!groups.has(weekStart)) {
       groups.set(weekStart, {
         weekStart,
-        label: formatWeekLabel(weekStart),
+        label: formatWeekLabel(getMondayWeekStartKey(weekStart)),
         tasks: [],
       });
     }
@@ -76,34 +66,49 @@ function createProjectTaskMap(tasks) {
   }, new Map());
 }
 
+function getProjectWeekKey(projectId, weekStart) {
+  return JSON.stringify([projectId, weekStart]);
+}
+
 function ProjectList({
   projects,
   tasks,
   isLoaded,
   emptyMessage = 'No projects yet',
+  sortOrder = 'number-asc',
+  onSortOrderChange,
   onDeleteTask,
   onOpenProject,
   onOpenProjectFolder,
   onUpdateTask,
+  onReorderTask,
 }) {
+  const treeId = useId();
+  const sortField = sortOrder.startsWith('task-count') ? 'task-count' : 'number';
+  const sortDirection = sortOrder.endsWith('-desc') ? 'desc' : 'asc';
+  const activeSortOrder = `${sortField}-${sortDirection}`;
+  const [collapsedProjectWeeks, setCollapsedProjectWeeks] = useState(() => new Set());
   const [expandedProjectIds, setExpandedProjectIds] = useState(() => new Set());
   const [editingTask, setEditingTask] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
   const [pendingDeleteTask, setPendingDeleteTask] = useState(null);
+  const getTaskRowDragProps = useTaskRowDrag({ tasks, onReorderTask, restrictToProject: true });
   const projectTaskMap = useMemo(() => createProjectTaskMap(tasks), [tasks]);
   const projectRows = useMemo(
     () =>
-      projects.map((project, index) => {
-        const projectTasks = projectTaskMap.get(project.projectId) || [];
-
-        return {
+      [...projects]
+        .filter((project) => projectTaskMap.has(project.projectId))
+        .map((project) => ({
+          ...project,
+          tasks: projectTaskMap.get(project.projectId),
+        }))
+        .sort((firstProject, secondProject) => compareProjects(firstProject, secondProject, activeSortOrder))
+        .map((project, index) => ({
           ...project,
           rowNumber: index + 1,
-          tasks: projectTasks,
-          weekGroups: groupProjectTasksByWeek(projectTasks),
-        };
-      }),
-    [projectTaskMap, projects],
+          weekGroups: groupProjectTasksByWeek(project.tasks),
+        })),
+    [projectTaskMap, projects, activeSortOrder],
   );
   const hasProjects = projectRows.length > 0;
   const currentWeekStart = getMondayWeekStartKey();
@@ -132,9 +137,23 @@ function ProjectList({
     });
   }
 
+  function handleToggleWeek(projectId, weekStart) {
+    const key = getProjectWeekKey(projectId, weekStart);
+    setCollapsedProjectWeeks((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
   function handleToggleAllProjects() {
     if (!hasProjects) {
       return;
+    }
+
+    if (!areAllProjectsExpanded) {
+      setCollapsedProjectWeeks(new Set());
     }
 
     setExpandedProjectIds(
@@ -152,6 +171,13 @@ function ProjectList({
       .map((project) => project.projectId);
 
     setExpandedProjectIds(new Set(currentWeekProjectIds));
+    setCollapsedProjectWeeks((current) => {
+      const next = new Set(current);
+      currentWeekProjectIds.forEach((projectId) =>
+        next.delete(getProjectWeekKey(projectId, currentWeekStart)),
+      );
+      return next;
+    });
   }
 
   function handleStartEdit(taskId) {
@@ -218,136 +244,134 @@ function ProjectList({
 
   function renderProjectRow(project) {
     const isExpanded = expandedProjectIds.has(project.projectId);
-    const projectLabel = getProjectLabel(project);
-    const canOpenProject = Boolean(project.projectId && onOpenProject);
-    const canOpenProjectFolder = Boolean(project.folderPath && onOpenProjectFolder);
+    const childrenId = `${treeId}-project-${project.rowNumber}`;
+    const projectLabel = [project.projectNumber, project.projectName].filter(Boolean).join(' - ');
 
     return (
-      <Fragment key={project.projectId}>
-        <tr className={styles.projectRow}>
-          <td className={styles.projectIndexCell}>
-            <button
-              className={styles.expandButton}
-              type="button"
-              onClick={() => handleToggleProject(project.projectId)}
-              aria-expanded={isExpanded}
-              aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${projectLabel}`}
-              title={isExpanded ? 'Collapse project' : 'Expand project'}
-            >
-              {isExpanded ? (
-                <ChevronDown size={16} aria-hidden="true" />
-              ) : (
-                <ChevronRight size={16} aria-hidden="true" />
-              )}
-              <span>{project.rowNumber}</span>
-            </button>
-          </td>
-          <td />
-          <td>
-            {canOpenProject ? (
-              <button
-                className={styles.projectNumberButton}
-                type="button"
-                onClick={() => onOpenProject(project.projectId)}
-              >
-                {project.projectNumber}
-              </button>
-            ) : (
-              <span className={styles.projectNumber}>{project.projectNumber}</span>
-            )}
-          </td>
-          <td>
-            {canOpenProjectFolder ? (
-              <button
-                className={styles.projectNameButton}
-                type="button"
-                onClick={() => onOpenProjectFolder(project.folderPath)}
-                title={project.folderPath}
-                aria-label={`Open folder for ${project.projectName}`}
-              >
-                {project.projectName}
-              </button>
-            ) : (
-              <span className={styles.projectName}>{project.projectName}</span>
-            )}
-          </td>
-          <td className={styles.projectTaskSummary}>
-            {getCountLabel(project.tasks.length, 'task', 'tasks')}
-          </td>
-          <td />
-          <td />
-        </tr>
-        {isExpanded && project.tasks.length === 0 ? (
-          <tr className={styles.emptyProjectTasksRow}>
-            <td className={styles.emptyProjectTasksCell} colSpan={PROJECT_COLUMNS.length}>
-              No tasks in this project
-            </td>
-          </tr>
-        ) : null}
-        {isExpanded
-          ? project.weekGroups.map((weekGroup) => (
-              <Fragment key={weekGroup.weekStart}>
-                {weekGroup.tasks.map(({ task, rowNumber }) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    rowNumber={rowNumber}
-                    showWeekColumn
-                    isCurrentWeek={weekGroup.weekStart === currentWeekStart}
-                    weekLabel={weekGroup.label}
-                    onOpenContextMenu={handleOpenContextMenu}
-                    onOpenProject={onOpenProject}
-                    onOpenProjectFolder={onOpenProjectFolder}
-                    onStatusChange={handleStatusChange}
-                  />
-                ))}
-              </Fragment>
-            ))
-          : null}
-      </Fragment>
+      <ProjectTreeNode
+        key={project.projectId}
+        className={styles.projectBranch}
+        project={project}
+        tasks={project.tasks}
+        showStatus={false}
+        isExpanded={isExpanded}
+        childrenId={childrenId}
+        onToggle={() => handleToggleProject(project.projectId)}
+        onOpenProject={onOpenProject}
+        onOpenProjectFolder={onOpenProjectFolder}
+      >
+        <ul id={childrenId} className={styles.weeks} aria-label={`Weeks for ${projectLabel}`}>
+          {project.weekGroups.map((weekGroup, weekIndex) => {
+            const weekKey = getProjectWeekKey(project.projectId, weekGroup.weekStart);
+            const isWeekExpanded = !collapsedProjectWeeks.has(weekKey);
+            const tasksId = `${childrenId}-week-${weekIndex}`;
+            const [weekLabel, ...dateLabel] = weekGroup.label.split(',');
+
+            return (
+              <li key={weekGroup.weekStart} className={`${treeStyles.projectBranch} ${styles.weekBranch}`}>
+                <div className={styles.weekGroup}>
+                  <button
+                    className={`${treeStyles.weekHeading} ${styles.weekHeading}`}
+                    type="button"
+                    onClick={() => handleToggleWeek(project.projectId, weekGroup.weekStart)}
+                    aria-expanded={isWeekExpanded}
+                    aria-controls={isWeekExpanded ? tasksId : undefined}
+                    aria-label={`${isWeekExpanded ? 'Collapse' : 'Expand'} ${weekGroup.label} for ${projectLabel}`}
+                  >
+                    {isWeekExpanded ? <ChevronDown size={16} aria-hidden="true" /> : <ChevronRight size={16} aria-hidden="true" />}
+                    <CalendarDays size={17} aria-hidden="true" />
+                    <span className={treeStyles.weekTitle}>{weekLabel}</span>
+                    <span className={treeStyles.weekDate}>{dateLabel.join(',').trim()}</span>
+                    {weekGroup.weekStart === currentWeekStart ? <span className={treeStyles.currentWeek}>Current week</span> : null}
+                    <span className={treeStyles.weekCount}>{getCountLabel(weekGroup.tasks.length, 'task', 'tasks')}</span>
+                  </button>
+                  {isWeekExpanded ? (
+                    <ul id={tasksId} className={`${treeStyles.tasks} ${styles.weekTasks}`} aria-label={`Tasks in ${weekGroup.label} for ${projectLabel}`}>
+                      {weekGroup.tasks.map(({ task, rowNumber }) => (
+                        <li key={task.id} className={treeStyles.taskBranch}>
+                          <TaskRow
+                            task={task}
+                            layout="tree"
+                            rowNumber={`${project.rowNumber}.${rowNumber}`}
+                            {...getTaskRowDragProps(task)}
+                            onEditTask={handleStartEdit}
+                            onOpenContextMenu={handleOpenContextMenu}
+                            onOpenProject={onOpenProject}
+                            onOpenProjectFolder={onOpenProjectFolder}
+                            onStatusChange={handleStatusChange}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </ProjectTreeNode>
     );
   }
 
   return (
     <>
       <section className={styles.projectPanel} aria-label="Projects">
-        <div className={styles.projectTableScroll}>
-          <table className={styles.projectTable}>
-            <colgroup>
-              <col className={styles.rowNumberColumn} />
-              <col className={styles.weekColumn} />
-              <col className={styles.projectCodeColumn} />
-              <col className={styles.projectNameColumn} />
-              <col className={styles.descriptionColumn} />
-              <col className={styles.dueDateColumn} />
-              <col className={styles.statusColumn} />
-            </colgroup>
-            <thead>
-              <tr>
-                {PROJECT_COLUMNS.map((column) => (
-                  <th key={column.id}>{column.label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {!isLoaded ? (
-                <tr>
-                  <td className={styles.emptyState} colSpan={PROJECT_COLUMNS.length}>
-                    Loading projects
-                  </td>
-                </tr>
-              ) : projectRows.length === 0 ? (
-                <tr>
-                  <td className={styles.emptyState} colSpan={PROJECT_COLUMNS.length}>
-                    {emptyMessage}
-                  </td>
-                </tr>
-              ) : (
-                projectRows.map(renderProjectRow)
-              )}
-            </tbody>
-          </table>
+        <div className={styles.projectToolbar}>
+          <div className={styles.sortControl}>
+            <span>Sort by</span>
+            <div className={styles.sortTabs} role="group" aria-label="Sort projects">
+              {PROJECT_SORT_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  className={`${styles.sortTab} ${sortField === option.value ? styles.activeSortTab : ''}`}
+                  type="button"
+                  value={option.value}
+                  aria-pressed={sortField === option.value}
+                  onClick={() => onSortOrderChange(`${option.value}-${sortDirection}`)}
+                  disabled={!isLoaded || !hasProjects}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className={styles.sortDirection} role="group" aria-label="Sort direction">
+            <button
+              className={`${styles.sortDirectionButton} ${sortDirection === 'asc' ? styles.activeSortDirection : ''}`}
+              type="button"
+              aria-label="Sort ascending"
+              aria-pressed={sortDirection === 'asc'}
+              title={sortField === 'number' ? 'Lowest number first' : 'Fewest tasks first'}
+              disabled={!isLoaded || !hasProjects}
+              onClick={() => onSortOrderChange(`${sortField}-asc`)}
+            >
+              <ArrowUp size={14} aria-hidden="true" />
+            </button>
+            <button
+              className={`${styles.sortDirectionButton} ${sortDirection === 'desc' ? styles.activeSortDirection : ''}`}
+              type="button"
+              aria-label="Sort descending"
+              aria-pressed={sortDirection === 'desc'}
+              title={sortField === 'number' ? 'Highest number first' : 'Most tasks first'}
+              disabled={!isLoaded || !hasProjects}
+              onClick={() => onSortOrderChange(`${sortField}-desc`)}
+            >
+              <ArrowDown size={14} aria-hidden="true" />
+            </button>
+          </div>
         </div>
+        {!isLoaded || !hasProjects ? (
+          <div className={treeStyles.emptyState} role="status">
+            <FolderOpen size={28} strokeWidth={1.4} aria-hidden="true" />
+            <p>{isLoaded ? emptyMessage : 'Loading projects'}</p>
+          </div>
+        ) : (
+          <div className={treeStyles.treeScroll}>
+            <ul className={styles.projectTree} aria-label="Projects and tasks">
+              {projectRows.map(renderProjectRow)}
+            </ul>
+          </div>
+        )}
         <footer className={styles.projectFooter}>
           <div className={styles.projectStats}>
             <span>

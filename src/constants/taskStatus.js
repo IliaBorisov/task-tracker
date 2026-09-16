@@ -21,3 +21,15 @@ export function normalizeTaskStatus(status) {
 
   return TASK_STATUS_OPTIONS.includes(status) ? status : DEFAULT_TASK_STATUS;
 }
+
+export function getTaskGroupStatus(tasks) {
+  if (tasks.length === 0) {
+    return null;
+  }
+
+  const firstStatus = normalizeTaskStatus(tasks[0].status);
+
+  return tasks.every((task) => normalizeTaskStatus(task.status) === firstStatus)
+    ? firstStatus
+    : TASK_STATUS.IN_PROGRESS;
+}

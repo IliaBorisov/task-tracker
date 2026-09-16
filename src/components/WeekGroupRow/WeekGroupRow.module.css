@@ -7,15 +7,15 @@ tr.weekRow td {
 .weekButton {
   display: flex;
   width: 100%;
-  min-height: 31px;
+  min-height: 28px;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 8px;
   background: transparent;
   color: inherit;
   cursor: pointer;
   font: inherit;
-  padding: 5px 12px;
+  padding: 3px 10px;
   text-align: left;
 }
 
@@ -38,14 +38,14 @@ tr.weekRow td {
 
 .weekLabelGroup span {
   font-size: 0.8rem;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .weekButton small {
   flex: 0 0 auto;
   color: currentColor;
   font-size: 0.76rem;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 @media (max-width: 760px) {

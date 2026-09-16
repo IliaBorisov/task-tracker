@@ -1,0 +1,137 @@
+.projectRow td {
+  height: 34px;
+  background: var(--color-table-header);
+  color: var(--color-text);
+  box-shadow:
+    inset 0 1px 0 var(--color-border-strong),
+    inset 0 -1px 0 var(--color-border-strong);
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.projectRow:hover td {
+  background: var(--color-primary-soft);
+}
+
+.projectRow td:first-child {
+  box-shadow:
+    inset 3px 0 0 var(--color-text-soft),
+    inset 0 1px 0 var(--color-border-strong),
+    inset 0 -1px 0 var(--color-border-strong);
+}
+
+.projectIndexCell {
+  padding: 0;
+  text-align: center;
+}
+
+.expandButton {
+  display: inline-flex;
+  width: 100%;
+  min-height: 29px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0 4px;
+}
+
+.expandButton:hover {
+  color: var(--color-primary);
+}
+
+.expandButton:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
+.projectNumber,
+.projectNumberButton {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.projectName,
+.projectNameButton {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.projectNameButton {
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  padding: 0;
+  text-align: left;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.projectNumberButton {
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+  text-align: left;
+}
+
+.projectNumberButton:hover,
+.projectNameButton:hover {
+  color: var(--color-text);
+}
+
+.projectNumberButton:focus-visible,
+.projectNameButton:focus-visible {
+  border-radius: var(--radius-control);
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.projectNumber,
+.projectNumberButton,
+.projectName,
+.projectNameButton {
+  border-radius: 4px;
+  margin: -2px -4px;
+  padding: 2px 4px;
+  transition:
+    background 140ms ease,
+    box-shadow 140ms ease,
+    color 140ms ease;
+}
+
+.projectNumber:hover,
+.projectNumberButton:hover,
+.projectName:hover,
+.projectNameButton:hover {
+  background: var(--color-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  color: var(--color-primary);
+}
+
+.projectTaskSummary {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.statusBadge {
+  display: flex;
+  align-items: center;
+}

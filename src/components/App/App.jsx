@@ -5,7 +5,7 @@ import ProjectList from '../ProjectList/ProjectList.jsx';
 import ProjectTasksPage from '../ProjectTasksPage/ProjectTasksPage.jsx';
 import TaskLibrary, { TASK_LIBRARY_TABS } from '../TaskLibrary/TaskLibrary.jsx';
 import TaskTable from '../TaskTable/TaskTable.jsx';
-import { DEFAULT_TASK_STATUS, normalizeTaskStatus } from '../../constants/taskStatus.js';
+import { normalizeTaskStatus } from '../../constants/taskStatus.js';
 import {
   chooseTaskDatabase,
   chooseProjectFolder,
@@ -21,6 +21,7 @@ import {
   getMondayWeekStartKey,
   normalizeDateKey,
 } from '../../utils/week.js';
+import { reorderProjectsInWeek } from '../../utils/projectOrder.js';
 import styles from './App.module.css';
 
 function createId() {
@@ -325,8 +326,20 @@ function reorderTaskInTasksByYear(tasksByYear, taskId, reorderOptions = {}) {
     return tasksByYear;
   }
 
+  const projectId = String(reorderOptions.projectId || '');
+
+  if (
+    projectId &&
+    (source.task.projectId !== projectId || (targetTask && targetTask.projectId !== projectId))
+  ) {
+    return tasksByYear;
+  }
+
+  const isInProjectWeek = (task) =>
+    task.projectId === projectId && getTaskWeekStart(task) === weekStart;
+  const reorderTasks = projectId ? yearTasks.filter(isInProjectWeek) : yearTasks;
   const nextTask = nextStatus ? { ...source.task, status: nextStatus } : source.task;
-  const remainingTasks = yearTasks.filter((task) => task.id !== normalizedTaskId);
+  const remainingTasks = reorderTasks.filter((task) => task.id !== normalizedTaskId);
   let insertionIndex = -1;
 
   if (targetTaskId) {
@@ -360,11 +373,16 @@ function reorderTaskInTasksByYear(tasksByYear, taskId, reorderOptions = {}) {
     }
   }
 
-  const nextYearTasks = [
+  const reorderedTasks = [
     ...remainingTasks.slice(0, insertionIndex),
     nextTask,
     ...remainingTasks.slice(insertionIndex),
   ];
+  // Keep other projects in their existing positions when reordering nested tasks.
+  let projectTaskIndex = 0;
+  const nextYearTasks = projectId
+    ? yearTasks.map((task) => (isInProjectWeek(task) ? reorderedTasks[projectTaskIndex++] : task))
+    : reorderedTasks;
   const isSameOrder =
     nextYearTasks.length === yearTasks.length &&
     nextYearTasks.every((task, index) => task === yearTasks[index]);
@@ -563,24 +581,10 @@ function hydrateTasks(tasks, projects) {
   });
 }
 
-const PROJECT_LIST_SORTER = new Intl.Collator(undefined, {
-  numeric: true,
-  sensitivity: 'base',
-});
-
-function compareProjectsByNumberThenName(firstProject, secondProject) {
-  return (
-    PROJECT_LIST_SORTER.compare(firstProject.projectNumber, secondProject.projectNumber) ||
-    PROJECT_LIST_SORTER.compare(firstProject.projectName, secondProject.projectName)
-  );
-}
-
 function filterProjectsForTasks(projects, tasks) {
   const taskProjectIds = new Set(tasks.map((task) => task.projectId).filter(Boolean));
 
-  return projects
-    .filter((project) => taskProjectIds.has(project.projectId))
-    .sort(compareProjectsByNumberThenName);
+  return projects.filter((project) => taskProjectIds.has(project.projectId));
 }
 
 const TASK_VIEW = {
@@ -608,6 +612,7 @@ function App() {
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [activeLibraryTab, setActiveLibraryTab] = useState(TASK_LIBRARY_TABS.ADD);
   const [activeTaskView, setActiveTaskView] = useState(getInitialTaskView);
+  const [projectSortOrder, setProjectSortOrder] = useState('number-asc');
   const [defaultTaskView, setDefaultTaskView] = useState(getInitialTaskView);
   const [searchQuery, setSearchQuery] = useState('');
   const allTasks = useMemo(() => flattenTasksByYear(tasksByYear), [tasksByYear]);
@@ -742,11 +747,24 @@ function App() {
     };
   }, [isLoaded, normalizedProjects, tasksByYear]);
 
-  function handleAddTask(projectNumber, projectName, description, dueDate = '') {
+  function handleAddTasks({ projectNumber, projectName, weekStart, tasks: taskDrafts }) {
     const createdAt = new Date();
     const createdAtIso = createdAt.toISOString();
     const trimmedProjectNumber = String(projectNumber || '').trim();
     const trimmedProjectName = String(projectName || '').trim();
+    const normalizedWeekStart = normalizeDateKey(weekStart);
+
+    if (
+      !trimmedProjectNumber ||
+      !trimmedProjectName ||
+      !normalizedWeekStart ||
+      !Array.isArray(taskDrafts) ||
+      taskDrafts.length === 0 ||
+      taskDrafts.some((task) => !String(task?.description || '').trim())
+    ) {
+      return false;
+    }
+
     const existingProject = projectIndex.lookup.get(getProjectNumberKey(trimmedProjectNumber));
     const projectId = existingProject?.projectId || createId();
 
@@ -760,19 +778,22 @@ function App() {
       ),
     );
 
-    const nextTask = {
+    const nextTasks = taskDrafts.map((task) => ({
       id: createId(),
       projectId,
-      description,
+      description: String(task.description).trim(),
       note: '',
-      status: DEFAULT_TASK_STATUS,
+      status: normalizeTaskStatus(task.status),
       createdAt: createdAtIso,
-      weekStart: getMondayWeekStartKey(createdAt),
-      dueDate: normalizeDateKey(dueDate),
-    };
+      weekStart: getMondayWeekStartKey(normalizedWeekStart),
+      dueDate: normalizeDateKey(task.dueDate),
+    }));
 
-    setActiveYear(getTaskYear(nextTask));
-    setTasksByYear((currentTasksByYear) => addTaskToTasksByYear(currentTasksByYear, nextTask));
+    setActiveYear(getTaskYear(nextTasks[0]));
+    setTasksByYear((currentTasksByYear) =>
+      nextTasks.reduce(addTaskToTasksByYear, currentTasksByYear),
+    );
+    return true;
   }
 
   function handleDeleteTask(taskId) {
@@ -846,6 +867,14 @@ function App() {
         return nextTask;
       }),
     );
+  }
+
+  function handleReorderProject(options) {
+    setTasksByYear((current) => {
+      const yearTasks = current[activeYear] || [];
+      const reordered = reorderProjectsInWeek(yearTasks, options);
+      return reordered === yearTasks ? current : { ...current, [activeYear]: reordered };
+    });
   }
 
   function handleReorderTask(reorderOptions) {
@@ -998,7 +1027,7 @@ function App() {
               activeTab={activeLibraryTab}
               databasePath={databasePath}
               onActiveTabChange={setActiveLibraryTab}
-              onAddTask={handleAddTask}
+              onAddTasks={handleAddTasks}
               onChooseDatabase={handleChooseDatabase}
               defaultTaskView={defaultTaskView}
               onDefaultTaskViewChange={handleDefaultTaskViewChange}
@@ -1081,11 +1110,14 @@ function App() {
                   projects={displayedProjects}
                   tasks={displayedTasks}
                   isLoaded={isLoaded}
+                  sortOrder={projectSortOrder}
+                  onSortOrderChange={setProjectSortOrder}
                   emptyMessage={isSearching ? 'No matching projects' : 'No projects this year'}
                   onOpenProject={setSelectedProjectId}
                   onOpenProjectFolder={handleOpenProjectFolder}
                   onDeleteTask={handleDeleteTask}
                   onUpdateTask={handleUpdateTask}
+                  onReorderTask={isSearching ? undefined : handleReorderTask}
                 />
               ) : isKanbanView ? (
                 <KanbanBoard
@@ -1103,6 +1135,8 @@ function App() {
                 <TaskTable
                   tasks={displayedTasks}
                   isLoaded={isLoaded}
+                  groupByProject
+                  onReorderProject={isSearching ? undefined : handleReorderProject}
                   emptyMessage={isSearching ? 'No matching tasks' : 'No tasks yet'}
                   onOpenProject={setSelectedProjectId}
                   onOpenProjectFolder={handleOpenProjectFolder}

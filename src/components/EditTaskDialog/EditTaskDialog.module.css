@@ -4,60 +4,64 @@
   z-index: 20;
   display: grid;
   place-items: center;
-  background: rgba(37, 47, 78, 0.28);
-  padding: 24px;
+  background: rgba(24, 25, 28, 0.24);
+  padding: 16px;
 }
 
 .dialog {
   display: flex;
   flex-direction: column;
   width: min(540px, 100%);
-  max-height: calc(100dvh - 48px);
+  max-height: calc(100dvh - 32px);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-panel);
   background: var(--color-surface);
   box-shadow: var(--shadow-popup);
   overflow: hidden;
-  padding: 18px;
+  padding: 12px;
 }
 
 .header {
   flex: 0 0 auto;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin: -12px -12px 12px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-table-header);
+  padding: 8px 12px;
 }
 
 .header h2 {
   margin: 0;
   color: var(--color-text);
-  font-size: 1.1rem;
+  font-size: 0.92rem;
+  font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0;
 }
 
 .closeButton {
   display: inline-grid;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
   place-items: center;
-  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-control);
-  background: var(--color-surface);
+  background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
 }
 
 .closeButton:hover {
-  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
   color: var(--color-primary);
 }
 
 .form {
   display: grid;
-  gap: 13px;
+  gap: 10px;
   min-height: 0;
   overflow-y: auto;
   padding-right: 4px;
@@ -65,28 +69,29 @@
 
 .field {
   display: grid;
-  gap: 7px;
+  min-width: 0;
+  gap: 4px;
 }
 
 .compactFieldRow {
   display: grid;
   grid-template-columns: minmax(120px, 1fr) minmax(190px, 1.35fr) minmax(120px, 1fr);
-  gap: 12px;
+  gap: 8px;
 }
 
 .field span {
   color: var(--color-text-muted);
-  font-size: 0.86rem;
-  font-weight: 800;
+  font-size: 0.76rem;
+  font-weight: 600;
 }
 
 .field textarea {
-  min-height: 96px;
+  min-height: 76px;
   resize: vertical;
 }
 
 .field .noteInput {
-  min-height: 72px;
+  min-height: 60px;
 }
 
 .dateInputWrap {
@@ -94,14 +99,14 @@
 }
 
 .dateInputWrapWithClear {
-  grid-template-columns: minmax(0, 1fr) 30px;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  gap: 4px;
 }
 
 .clearDateButton {
   display: inline-grid;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   align-self: center;
   place-items: center;
   border-radius: var(--radius-control);
@@ -123,21 +128,25 @@
 .actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 4px;
+  gap: 8px;
+  margin-top: 2px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 10px;
 }
 
 .cancelButton,
 .saveButton {
   display: inline-flex;
-  min-width: 92px;
-  height: 36px;
+  min-width: 80px;
+  height: 34px;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 6px;
   border-radius: var(--radius-control);
   cursor: pointer;
-  font-weight: 800;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0 12px;
 }
 
 .cancelButton {
@@ -147,7 +156,7 @@
 }
 
 .cancelButton:hover {
-  border-color: var(--color-primary);
+  background: var(--color-surface-muted);
   color: var(--color-primary);
 }
 
@@ -163,6 +172,13 @@
 .saveButton:disabled {
   cursor: not-allowed;
   opacity: 0.48;
+}
+
+.closeButton:focus-visible,
+.cancelButton:focus-visible,
+.saveButton:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 @media (max-width: 560px) {

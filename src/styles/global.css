@@ -7,35 +7,48 @@
 }
 
 :root {
-  --color-page: #f3f5fb;
+  --color-page: #f5f5f5;
   --color-surface: #ffffff;
-  --color-surface-muted: #f7f8fe;
-  --color-table-header: #f7f8fd;
-  --color-table-header-border: #edf0f8;
-  --color-table-header-text: #747d92;
-  --color-row-hover: #eef3ff;
-  --color-border: #e6eaf4;
-  --color-border-strong: #d4dbea;
-  --color-text: #20263a;
-  --color-text-muted: #5f687c;
-  --color-text-soft: #929bad;
-  --color-primary: #2f55ff;
-  --color-primary-hover: #1f43df;
-  --color-primary-soft: #eef3ff;
-  --color-cyan-soft: #dcf7ff;
-  --color-cyan-text: #1687a3;
-  --color-green-soft: #d2ffd9;
-  --color-green-text: #118735;
-  --color-amber-soft: #ffe39a;
-  --color-amber-text: #a95f00;
-  --color-red-soft: #ffd9e1;
-  --color-red-text: #bd123c;
-  --color-red-hover: #9f1239;
-  --color-focus-ring: rgba(47, 85, 255, 0.18);
-  --radius-panel: 18px;
-  --radius-control: 13px;
-  --shadow-panel: 0 18px 48px rgba(37, 47, 78, 0.08);
-  --shadow-popup: 0 28px 80px rgba(37, 47, 78, 0.2);
+  --color-surface-muted: #f8f8f8;
+  --color-table-header: #f3f3f4;
+  --color-table-header-border: #e5e5e7;
+  --color-table-header-text: #686a70;
+  --color-row-hover: #f5f5f5;
+  --color-border: #e5e5e7;
+  --color-border-strong: #d9dadd;
+  --color-text: #303238;
+  --color-text-muted: #686a70;
+  --color-text-soft: #86888e;
+  --color-text-completed: #a0a2a8;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-soft: #eaf1ff;
+  --color-cyan-soft: #cff5fa;
+  --color-cyan-text: #086b80;
+  --color-green-soft: #cef5df;
+  --color-green-text: #08643b;
+  --color-amber-soft: #ffecad;
+  --color-amber-text: #855000;
+  --color-red-soft: #ffe0e9;
+  --color-red-text: #be1744;
+  --color-red-hover: #9d1036;
+  --color-status-not-started-accent: #f43f70;
+  --color-status-not-started-soft: #ffe0e9;
+  --color-status-not-started-text: #a51640;
+  --color-status-in-progress-accent: #f59e0b;
+  --color-status-in-progress-soft: #ffecad;
+  --color-status-in-progress-text: #855000;
+  --color-status-in-review-accent: #8b5cf6;
+  --color-status-in-review-soft: #ebddff;
+  --color-status-in-review-text: #6426af;
+  --color-status-complete-accent: #16b970;
+  --color-status-complete-soft: #cef5df;
+  --color-status-complete-text: #08643b;
+  --color-focus-ring: rgba(37, 99, 235, 0.4);
+  --radius-panel: 9px;
+  --radius-control: 6px;
+  --shadow-panel: none;
+  --shadow-popup: 0 8px 24px rgba(24, 24, 27, 0.12);
 
   color: var(--color-text);
   background: var(--color-page);
@@ -79,7 +92,8 @@ textarea {
   background: var(--color-surface);
   color: var(--color-text);
   outline: none;
-  padding: 0 12px;
+  font-size: 0.84rem;
+  padding: 0 10px;
   transition:
     border-color 140ms ease,
     box-shadow 140ms ease;
@@ -87,12 +101,12 @@ textarea {
 
 input,
 select {
-  height: 42px;
+  height: 34px;
 }
 
 textarea {
   line-height: 1.45;
-  padding: 10px 12px;
+  padding: 7px 10px;
 }
 
 select {
@@ -108,7 +122,7 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-focus-ring);
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
 }
 
 input::placeholder {

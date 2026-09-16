@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, screen, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, screen, shell, session } = require('electron');
 const { randomUUID } = require('node:crypto');
 const fs = require('node:fs/promises');
 const path = require('node:path');
@@ -6,6 +6,8 @@ const path = require('node:path');
 const isDev = !app.isPackaged;
 let mainWindow = null;
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
+const APP_LOCALE = 'en-GB';
+const SPELLCHECK_LANGUAGES = [APP_LOCALE];
 const DEFAULT_TASK_VIEW = 'table';
 const TASK_VIEW_VALUES = new Set([DEFAULT_TASK_VIEW, 'kanban']);
 const DEFAULT_WINDOW_WIDTH = 1040;
@@ -17,6 +19,12 @@ const MIN_VISIBLE_WINDOW_HEIGHT = 80;
 const WINDOW_STATE_SAVE_DELAY = 300;
 let settingsWriteQueue = Promise.resolve();
 let windowStateSaveTimeout = null;
+
+app.commandLine.appendSwitch('lang', APP_LOCALE);
+
+function configureSpellChecker() {
+  session.defaultSession.setSpellCheckerLanguages(SPELLCHECK_LANGUAGES);
+}
 
 function getDefaultDatabasePath() {
   return path.join(app.getPath('userData'), 'tasks.json');
@@ -769,6 +777,7 @@ async function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       preload: path.join(__dirname, 'preload.cjs'),
+      spellcheck: true,
     },
   });
 
@@ -800,6 +809,7 @@ if (!gotSingleInstanceLock) {
   app.on('second-instance', focusMainWindow);
 
   app.whenReady().then(async () => {
+    configureSpellChecker();
     registerTaskDatabaseHandlers();
     await createWindow();
 

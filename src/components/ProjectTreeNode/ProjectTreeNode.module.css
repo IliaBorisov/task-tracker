@@ -1,0 +1,140 @@
+.projectHeading {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 3px 8px;
+  border: 1px solid #e5e5e7;
+  border-radius: 9px;
+  background: #f3f3f4;
+  padding: 2px 10px 2px 4px;
+}
+
+.projectHeading:hover {
+  background: #ededee;
+}
+
+.disclosure {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 5px;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.disclosure > svg:last-child {
+  color: var(--color-amber-text);
+}
+
+.projectIdentity {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+
+.projectNumber,
+.projectName {
+  min-width: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.84rem;
+  padding: 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.projectNumber {
+  color: var(--color-primary);
+  font-weight: 850;
+}
+
+.projectName {
+  font-weight: 700;
+}
+
+button.projectNumber,
+button.projectName {
+  cursor: pointer;
+}
+
+button.projectNumber:hover,
+button.projectName:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.projectMeta {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text-muted);
+  font-size: 0.71rem;
+}
+
+.projectStatus {
+  border-left: 1px solid #d5d5d8;
+  padding-left: 10px;
+}
+
+.dragHandle {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  color: var(--color-text-soft);
+  cursor: grab;
+  user-select: none;
+  padding: 2px;
+}
+
+.dragHandle:hover {
+  color: var(--color-text);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragging {
+  opacity: 0.5;
+}
+
+.dropBefore {
+  box-shadow: 0 -2px 0 var(--color-primary);
+}
+
+.dropAfter {
+  box-shadow: 0 2px 0 var(--color-primary);
+}
+
+.disclosure:focus-visible,
+.projectNumber:focus-visible,
+.projectName:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .projectHeading {
+    flex-wrap: wrap;
+  }
+
+  .projectIdentity {
+    flex-basis: calc(100% - 82px);
+  }
+
+  .projectMeta {
+    order: 1;
+    width: 100%;
+    padding-left: 46px;
+  }
+}

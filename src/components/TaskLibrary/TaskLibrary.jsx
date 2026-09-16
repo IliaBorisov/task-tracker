@@ -34,7 +34,7 @@ function TaskLibrary({
   activeTab,
   databasePath,
   onActiveTabChange,
-  onAddTask,
+  onAddTasks,
   onChooseDatabase,
   defaultTaskView = 'table',
   onDefaultTaskViewChange,
@@ -130,7 +130,7 @@ function TaskLibrary({
 
     return (
       <TaskForm
-        onAddTask={onAddTask}
+        onAddTasks={onAddTasks}
         projectLookup={projectLookup}
         projectSuggestions={projectSuggestions}
       />
@@ -195,7 +195,7 @@ function TaskLibrary({
           </button>
         </div>
         <div
-          className={styles.panelBody}
+          className={`${styles.panelBody} ${activeTabId === TASK_LIBRARY_TABS.ADD ? styles.addPanelBody : ''}`}
           id="task-library-panel"
           role="tabpanel"
           aria-labelledby={`task-library-tab-${activeTabId}`}

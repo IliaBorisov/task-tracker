@@ -387,6 +387,7 @@ function ProjectTasksPage({
       <TaskTable
         tasks={tasks}
         isLoaded={isLoaded}
+        groupByProject={false}
         onDeleteTask={onDeleteTask}
         onOpenProjectFolder={onOpenProjectFolder}
         onUpdateTask={onUpdateTask}

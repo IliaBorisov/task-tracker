@@ -11,6 +11,7 @@ import { formatDateLabel, formatWeekLabel, getMondayWeekStartKey } from '../../u
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog.jsx';
 import EditTaskDialog from '../EditTaskDialog/EditTaskDialog.jsx';
 import TaskContextMenu from '../TaskContextMenu/TaskContextMenu.jsx';
+import treeStyles from '../TaskTree/TaskTree.module.css';
 import styles from './KanbanBoard.module.css';
 
 const INTERACTIVE_DRAG_SELECTOR = 'button, select, input, textarea, a, [role="button"]';
@@ -431,30 +432,34 @@ function KanbanBoard({
             <div className={styles.weekList}>
               {weekGroups.map((group) => {
                 const isWeekCollapsed = collapsedWeekStarts.has(group.weekStart);
+                const [weekLabel, ...dateLabel] = group.label.split(',');
 
                 return (
-                  <section className={styles.weekSection} key={group.weekStart}>
-                    <header className={styles.weekHeader}>
-                      <button
-                        className={styles.weekButton}
-                        type="button"
-                        onClick={() => handleToggleWeekGroup(group.weekStart)}
-                        aria-expanded={!isWeekCollapsed}
-                        title={isWeekCollapsed ? 'Expand week' : 'Collapse week'}
-                      >
-                        <span className={styles.weekLabelGroup}>
-                          {isWeekCollapsed ? (
-                            <ChevronRight size={16} aria-hidden="true" />
-                          ) : (
-                            <ChevronDown size={16} aria-hidden="true" />
-                          )}
-                          <span>{group.label}</span>
-                        </span>
-                        <small>
-                          {group.taskCount === 1 ? '1 task' : `${group.taskCount} tasks`}
-                        </small>
-                      </button>
-                    </header>
+                  <section
+                    className={`${styles.weekSection} ${treeStyles.borderedWeek} ${isWeekCollapsed ? '' : styles.expandedWeek}`}
+                    key={group.weekStart}
+                  >
+                    <button
+                      className={`${treeStyles.weekHeading} ${styles.weekButton}`}
+                      type="button"
+                      onClick={() => handleToggleWeekGroup(group.weekStart)}
+                      aria-expanded={!isWeekCollapsed}
+                      aria-label={`${isWeekCollapsed ? 'Expand' : 'Collapse'} ${group.label}`}
+                      title={isWeekCollapsed ? 'Expand week' : 'Collapse week'}
+                    >
+                      {isWeekCollapsed ? (
+                        <ChevronRight size={16} aria-hidden="true" />
+                      ) : (
+                        <ChevronDown size={16} aria-hidden="true" />
+                      )}
+                      <CalendarDays size={17} aria-hidden="true" />
+                      <span className={treeStyles.weekTitle}>{weekLabel}</span>
+                      <span className={treeStyles.weekDate}>{dateLabel.join(',').trim()}</span>
+                      {group.weekStart === currentWeekStart ? <span className={treeStyles.currentWeek}>Current week</span> : null}
+                      <span className={treeStyles.weekCount}>
+                        {group.taskCount === 1 ? '1 task' : `${group.taskCount} tasks`}
+                      </span>
+                    </button>
                     {isWeekCollapsed ? null : (
                       <div className={styles.columns}>
                         {TASK_STATUS_OPTIONS.map((status) => {

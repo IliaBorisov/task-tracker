@@ -1,0 +1,198 @@
+.treeScroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 8px 18px 12px;
+}
+
+.weeks,
+.projects,
+.tasks,
+.weekTasks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.weekBranch + .weekBranch {
+  margin-top: 8px;
+}
+
+.borderedWeek {
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+}
+
+.borderedWeek > .weekHeading {
+  background: var(--color-surface-muted);
+}
+
+.borderedWeek > .weekHeading[aria-expanded='true'] {
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.borderedWeek > .projects {
+  padding-right: 3px;
+}
+
+.borderedWeek > .weekTasks {
+  padding-right: 3px;
+  padding-bottom: 3px;
+}
+
+.weekHeading {
+  display: flex;
+  width: 100%;
+  min-height: 30px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 3px 8px;
+  text-align: left;
+}
+
+.weekHeading:hover,
+.borderedWeek > .weekHeading:hover {
+  background: #f4f4f5;
+}
+
+.weekHeading > svg {
+  flex-shrink: 0;
+}
+
+.weekTitle {
+  color: var(--color-text);
+  font-size: 0.86rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.weekDate,
+.weekCount {
+  font-size: 0.76rem;
+}
+
+.weekCount {
+  margin-left: auto;
+  text-align: right;
+}
+
+.currentWeek {
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, var(--color-border));
+  border-radius: 5px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.projects {
+  margin: 2px 0 0 16px;
+}
+
+.weekTasks {
+  margin-left: 16px;
+}
+
+.projectBranch,
+.taskBranch {
+  position: relative;
+  padding-left: 22px;
+}
+
+.projectBranch {
+  padding-bottom: 3px;
+}
+
+.projectBranch::before,
+.taskBranch::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-left: 1px solid #d9dadd;
+  content: '';
+}
+
+.projectBranch::after,
+.taskBranch::after {
+  position: absolute;
+  top: 17px;
+  left: 0;
+  width: 18px;
+  border-top: 1px solid #d9dadd;
+  content: '';
+}
+
+.projectBranch:last-child::before,
+.taskBranch:last-child::before {
+  bottom: auto;
+  height: 17px;
+}
+
+.tasks {
+  margin: 0 0 0 22px;
+}
+
+.weekHeading:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.emptyState {
+  display: flex;
+  min-height: 180px;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--color-text-muted);
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 760px) {
+  .treeScroll {
+    padding: 6px 8px 10px;
+  }
+
+  .weekHeading {
+    flex-wrap: wrap;
+    gap: 2px 5px;
+  }
+
+  .weekCount {
+    width: 100%;
+    padding-left: 44px;
+    text-align: left;
+  }
+
+  .projects {
+    margin-left: 10px;
+  }
+
+  .projectBranch,
+  .taskBranch {
+    padding-left: 14px;
+  }
+
+  .projectBranch::after,
+  .taskBranch::after {
+    width: 10px;
+  }
+
+  .tasks {
+    margin-left: 14px;
+  }
+}
