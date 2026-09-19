@@ -1,117 +1,155 @@
-.libraryPanel {
-  flex: 0 0 auto;
-  margin-bottom: 10px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-panel);
-  overflow: hidden;
-}
-
-.tabBar {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-table-header);
-  padding: 4px 6px;
-}
-
-.collapsedLibraryPanel .tabBar {
-  border-bottom: 0;
-}
-
-.tabList {
-  display: flex;
-  min-width: 0;
-  flex: 1 1 auto;
-  gap: 4px;
-  overflow-x: auto;
-}
-
-.tabButton {
-  display: inline-flex;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  font-size: 0.82rem;
-  font-weight: 600;
-  padding: 0;
-  transition:
-    background 140ms ease,
-    color 140ms ease,
-    box-shadow 140ms ease;
-}
-
-.tabButton:hover {
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-}
-
-.tabButton:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
-}
-
-.activeTabButton {
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-  box-shadow: inset 0 0 0 1px var(--color-border-strong);
-}
-
-.settingsButton,
-.foldButton {
-  display: inline-flex;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  padding: 0;
-  transition:
-    background 140ms ease,
-    color 140ms ease,
-    box-shadow 140ms ease;
-}
-
-.settingsButton:hover,
-.foldButton:hover {
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-}
-
-.settingsButton:focus-visible,
-.foldButton:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
-}
-
-.panelBody {
-  height: auto;
-  overflow-y: auto;
-  padding: 10px 12px;
-}
-
-.addPanelBody {
-  height: auto;
-  max-height: 45vh;
-}
-
-.searchPanel {
+.toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 40px minmax(0, 520px) 40px;
+  justify-content: center;
+  flex: 0 0 auto;
   align-items: center;
   gap: 10px;
+}
+
+.circleButton {
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.addButton,
+.circleButton:hover {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.circleButton:focus-visible,
+.clearSearchButton:focus-visible,
+.closeButton:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.searchField {
+  display: flex;
+  width: min(520px, 100%);
+  justify-self: center;
+  min-width: 0;
+  height: 40px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  padding: 0 12px;
+}
+
+.searchField:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.searchIcon {
+  flex: 0 0 auto;
+  color: var(--color-text-soft);
+}
+
+.searchField input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.searchCount {
+  flex: 0 0 auto;
+  color: var(--color-text-soft);
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+
+.clearSearchButton,
+.closeButton {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.clearSearchButton:hover,
+.closeButton:hover {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.popupBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  background: rgba(24, 25, 28, 0.24);
+  padding: 16px;
+}
+
+.popupDialog {
+  display: flex;
+  width: min(520px, 100%);
+  max-height: calc(100dvh - 32px);
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-popup);
+}
+
+.addDialog {
+  width: min(880px, 100%);
+}
+
+.popupHeader {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid var(--color-border);
+  padding: 12px 16px;
+}
+
+.popupHeader h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.addContent,
+.settingsContent {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.settingsContent {
+  display: grid;
+  gap: 16px;
 }
 
 .defaultViewPanel,
@@ -203,148 +241,17 @@
   outline-offset: 2px;
 }
 
-.settingsBackdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: grid;
-  place-items: center;
-  background: rgba(24, 25, 28, 0.24);
-  padding: 16px;
-}
-
-.settingsDialog {
-  display: flex;
-  flex-direction: column;
-  width: min(520px, 100%);
-  max-height: min(620px, calc(100dvh - 32px));
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-popup);
-  overflow: hidden;
-}
-
-.settingsHeader {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-table-header);
-  padding: 8px 12px;
-}
-
-.settingsHeader h2 {
-  margin: 0;
-  color: var(--color-text);
-  font-size: 0.92rem;
-  font-weight: 700;
-}
-
-.settingsCloseButton {
-  display: inline-grid;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--color-text-muted);
-  cursor: pointer;
-}
-
-.settingsCloseButton:hover {
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-}
-
-.settingsCloseButton:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
-}
-
-.settingsContent {
-  display: grid;
-  min-height: 0;
-  gap: 12px;
-  overflow-y: auto;
-  padding: 12px;
-}
-
-.searchField {
-  position: relative;
-  display: grid;
-  min-width: 0;
-}
-
-.searchField input {
-  height: 34px;
-  padding-left: 34px;
-  padding-right: 34px;
-}
-
-.searchIcon {
-  position: absolute;
-  top: 50%;
-  left: 10px;
-  color: var(--color-text-soft);
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-.clearSearchButton {
-  position: absolute;
-  top: 50%;
-  right: 3px;
-  display: inline-grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transform: translateY(-50%);
-}
-
-.clearSearchButton:hover {
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-}
-
-.clearSearchButton:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 1px;
-}
-
-.searchCount {
-  color: var(--color-text-muted);
-  font-size: 0.76rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-@media (max-width: 760px) {
-  .panelBody {
-    padding: 10px;
-  }
-
-  .searchPanel {
-    grid-template-columns: 1fr;
+@media (max-width: 420px) {
+  .toolbar {
     gap: 6px;
   }
 
-  .defaultViewControl {
-    width: 100%;
+  .searchField {
+    gap: 5px;
+    padding: 0 8px;
   }
 
-  .defaultViewButton {
-    flex: 1 1 0;
-  }
-
-  .databaseButton {
-    width: 100%;
+  .searchCount {
+    display: none;
   }
 }

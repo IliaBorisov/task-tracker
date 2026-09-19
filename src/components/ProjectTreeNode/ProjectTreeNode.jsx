@@ -1,6 +1,13 @@
 import { ChevronDown, ChevronRight, Folder, FolderOpen, GripVertical } from 'lucide-react';
-import { getTaskGroupStatus } from '../../constants/taskStatus.js';
+import { TASK_STATUS, getTaskGroupStatus } from '../../constants/taskStatus.js';
 import styles from './ProjectTreeNode.module.css';
+
+const STATUS_DOT_STYLES = {
+  [TASK_STATUS.NOT_STARTED]: styles.notStarted,
+  [TASK_STATUS.IN_PROGRESS]: styles.inProgress,
+  [TASK_STATUS.IN_REVIEW]: styles.inReview,
+  [TASK_STATUS.COMPLETE]: styles.complete,
+};
 
 function ProjectTreeNode({
   project,
@@ -47,6 +54,13 @@ function ProjectTreeNode({
           {isExpanded ? <ChevronDown size={15} aria-hidden="true" /> : <ChevronRight size={15} aria-hidden="true" />}
           {isExpanded ? <FolderOpen size={18} aria-hidden="true" /> : <Folder size={18} aria-hidden="true" />}
         </button>
+        {status ? (
+          <span
+            className={`${styles.statusDot} ${STATUS_DOT_STYLES[status]}`}
+            title={status}
+            aria-hidden="true"
+          />
+        ) : null}
         <div className={styles.projectIdentity}>
           {onOpenProject && project.projectId ? (
             <button className={styles.projectNumber} type="button" onClick={() => onOpenProject(project.projectId)} title="Open project details">{project.projectNumber}</button>

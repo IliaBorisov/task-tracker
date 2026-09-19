@@ -316,9 +316,21 @@
 }
 
 .treeBody {
+  position: relative;
   flex: 1 1 220px;
   min-width: 0;
   padding-top: 3px;
+  padding-left: 18px;
+}
+
+.treeStatusBox {
+  position: absolute;
+  top: calc(3px + 0.645rem - 5px);
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--row-status-accent);
 }
 
 .treeDescription,

@@ -134,6 +134,7 @@ function TaskRow({
           </span>
         ) : null}
         <div className={styles.treeBody}>
+          <span className={styles.treeStatusBox} title={normalizedStatus} aria-hidden="true" />
           {onEditTask ? (
             <button
               className={styles.treeDescriptionButton}

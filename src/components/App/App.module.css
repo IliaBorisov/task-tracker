@@ -40,14 +40,24 @@
   --task-year-switcher-background: var(--color-table-header);
 
   position: relative;
-  z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(290px, 1fr) minmax(220px, 620px) minmax(290px, 1fr);
   flex: 0 0 auto;
   align-items: center;
   column-gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   padding: 0;
+}
+
+.searchTools {
+  min-width: 0;
+}
+
+.taskViewActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .tableTaskViewToolbar {
@@ -117,7 +127,6 @@
 .yearSwitcher {
   display: inline-flex;
   height: 32px;
-  grid-column: 2;
   flex: 0 0 auto;
   justify-self: end;
   align-items: center;
@@ -178,10 +187,15 @@
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 900px) {
   .taskViewToolbar {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 4px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 8px;
+  }
+
+  .searchTools {
+    grid-column: 1 / -1;
+    grid-row: 1;
   }
 
   .taskViewTabs {
@@ -196,8 +210,20 @@
     padding: 0 10px;
   }
 
-  .yearSwitcher {
+  .taskViewActions {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 560px) {
+  .taskViewToolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .taskViewActions {
     grid-column: 1;
-    grid-row: 1;
+    grid-row: 3;
+    justify-content: space-between;
   }
 }

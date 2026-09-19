@@ -1,39 +1,15 @@
-import { ChevronDown, ChevronUp, Database, Plus, Search, Settings, X } from 'lucide-react';
-import { useState } from 'react';
+import { Database, Plus, Search, Settings, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import TaskForm from '../TaskForm/TaskForm.jsx';
 import styles from './TaskLibrary.module.css';
-
-export const TASK_LIBRARY_TABS = {
-  ADD: 'add',
-  SEARCH: 'search',
-};
-
-const TAB_ITEMS = [
-  {
-    id: TASK_LIBRARY_TABS.ADD,
-    label: 'Add',
-    Icon: Plus,
-  },
-  {
-    id: TASK_LIBRARY_TABS.SEARCH,
-    label: 'Search',
-    Icon: Search,
-  },
-];
 
 const DEFAULT_VIEW_OPTIONS = [
   { id: 'table', label: 'Table' },
   { id: 'kanban', label: 'Kanban' },
 ];
 
-function getTaskCountLabel(count, singularLabel, pluralLabel) {
-  return `${count} ${count === 1 ? singularLabel : pluralLabel}`;
-}
-
 function TaskLibrary({
-  activeTab,
   databasePath,
-  onActiveTabChange,
   onAddTasks,
   onChooseDatabase,
   defaultTaskView = 'table',
@@ -45,15 +21,53 @@ function TaskLibrary({
   searchResultCount,
   totalTaskCount,
 }) {
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const activeTabId = TAB_ITEMS.some((tab) => tab.id === activeTab)
-    ? activeTab
-    : TASK_LIBRARY_TABS.ADD;
+  const [activePopup, setActivePopup] = useState(null);
+  const dialogRef = useRef(null);
+  const searchInputRef = useRef(null);
   const hasSearchQuery = searchQuery.trim().length > 0;
+  const count = hasSearchQuery ? searchResultCount : totalTaskCount;
   const searchCountLabel = hasSearchQuery
-    ? getTaskCountLabel(searchResultCount, 'match', 'matches')
-    : getTaskCountLabel(totalTaskCount, 'task', 'tasks');
+    ? `${count} ${count === 1 ? 'match' : 'matches'}`
+    : `${count} ${count === 1 ? 'task' : 'tasks'}`;
+  const isAddPopup = activePopup === 'add';
+
+  useEffect(() => {
+    if (!activePopup) return undefined;
+
+    const trigger = document.activeElement;
+    const dialog = dialogRef.current;
+    const initialFocus = dialog.querySelector('input') || dialog.querySelector('button');
+    initialFocus?.focus();
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        // Let the project combobox dismiss its suggestions first.
+        if (event.target.getAttribute('aria-expanded') === 'true') return;
+        event.preventDefault();
+        setActivePopup(null);
+      }
+      if (event.key !== 'Tab') return;
+
+      const controls = Array.from(dialog.querySelectorAll(
+        'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]',
+      )).filter((element) => element.getClientRects().length > 0);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        first?.focus();
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      if (trigger?.isConnected) trigger.focus();
+    };
+  }, [activePopup]);
 
   function renderSettingsContent() {
     return (
@@ -99,141 +113,94 @@ function TaskLibrary({
     );
   }
 
-  function renderActivePanel() {
-    if (activeTabId === TASK_LIBRARY_TABS.SEARCH) {
-      return (
-        <div className={styles.searchPanel}>
-          <label className={styles.searchField}>
-            <Search className={styles.searchIcon} size={18} aria-hidden="true" />
-            <input
-              value={searchQuery}
-              onChange={(event) => onSearchQueryChange(event.target.value)}
-              placeholder="Search tasks"
-              aria-label="Search tasks"
-            />
-            {hasSearchQuery ? (
-              <button
-                className={styles.clearSearchButton}
-                type="button"
-                onClick={() => onSearchQueryChange('')}
-                aria-label="Clear search"
-                title="Clear search"
-              >
-                <X size={16} aria-hidden="true" />
-              </button>
-            ) : null}
-          </label>
-          <span className={styles.searchCount}>{searchCountLabel}</span>
-        </div>
-      );
-    }
-
-    return (
-      <TaskForm
-        onAddTasks={onAddTasks}
-        projectLookup={projectLookup}
-        projectSuggestions={projectSuggestions}
-      />
-    );
-  }
-
   return (
     <>
-      <section
-        className={`${styles.libraryPanel} ${isPanelOpen ? '' : styles.collapsedLibraryPanel}`}
-        aria-label="Task tools"
-      >
-        <div className={styles.tabBar}>
-          <div className={styles.tabList} role="tablist" aria-label="Task tools">
-            {TAB_ITEMS.map(({ id, label, Icon }) => {
-              const isActive = id === activeTabId;
-
-              return (
-                <button
-                  className={`${styles.tabButton} ${isActive ? styles.activeTabButton : ''}`}
-                  id={`task-library-tab-${id}`}
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-controls="task-library-panel"
-                  onClick={() => {
-                    onActiveTabChange(id);
-                    setIsPanelOpen(true);
-                  }}
-                  aria-label={label}
-                  title={label}
-                >
-                  <Icon size={17} aria-hidden="true" />
-                </button>
-              );
-            })}
-          </div>
-          <button
-            className={styles.settingsButton}
-            type="button"
-            onClick={() => setIsSettingsOpen(true)}
-            aria-label="Open settings"
-            title="Settings"
-          >
-            <Settings size={17} aria-hidden="true" />
-          </button>
-          <button
-            className={styles.foldButton}
-            type="button"
-            onClick={() => setIsPanelOpen((currentIsPanelOpen) => !currentIsPanelOpen)}
-            aria-controls="task-library-panel"
-            aria-expanded={isPanelOpen}
-            aria-label={isPanelOpen ? 'Fold tools panel' : 'Unfold tools panel'}
-            title={isPanelOpen ? 'Fold tools panel' : 'Unfold tools panel'}
-          >
-            {isPanelOpen ? (
-              <ChevronUp size={17} aria-hidden="true" />
-            ) : (
-              <ChevronDown size={17} aria-hidden="true" />
-            )}
-          </button>
-        </div>
-        <div
-          className={`${styles.panelBody} ${activeTabId === TASK_LIBRARY_TABS.ADD ? styles.addPanelBody : ''}`}
-          id="task-library-panel"
-          role="tabpanel"
-          aria-labelledby={`task-library-tab-${activeTabId}`}
-          hidden={!isPanelOpen}
+      <section className={styles.toolbar} aria-label="Task tools">
+        <button
+          className={`${styles.circleButton} ${styles.addButton}`}
+          type="button"
+          onClick={() => setActivePopup('add')}
+          aria-label="Add tasks"
+          aria-haspopup="dialog"
+          aria-expanded={isAddPopup}
+          title="Add tasks"
         >
-          {isPanelOpen ? renderActivePanel() : null}
+          <Plus size={20} aria-hidden="true" />
+        </button>
+        <div className={styles.searchField} role="search">
+          <Search className={styles.searchIcon} size={18} aria-hidden="true" />
+          <input
+            ref={searchInputRef}
+            value={searchQuery}
+            onChange={(event) => onSearchQueryChange(event.target.value)}
+            placeholder="Search tasks"
+            aria-label="Search tasks"
+          />
+          <span className={styles.searchCount} role="status">{searchCountLabel}</span>
+          {hasSearchQuery ? (
+            <button
+              className={styles.clearSearchButton}
+              type="button"
+              onClick={() => {
+                onSearchQueryChange('');
+                searchInputRef.current?.focus();
+              }}
+              aria-label="Clear search"
+              title="Clear search"
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          ) : null}
         </div>
+        <button
+          className={styles.circleButton}
+          type="button"
+          onClick={() => setActivePopup('settings')}
+          aria-label="Open settings"
+          aria-haspopup="dialog"
+          aria-expanded={activePopup === 'settings'}
+          title="Settings"
+        >
+          <Settings size={19} aria-hidden="true" />
+        </button>
       </section>
 
-      {isSettingsOpen ? (
+      {activePopup ? (
         <div
-          className={styles.settingsBackdrop}
+          className={styles.popupBackdrop}
           role="presentation"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setIsSettingsOpen(false);
-            }
+            if (event.target === event.currentTarget) setActivePopup(null);
           }}
         >
           <section
-            className={styles.settingsDialog}
+            ref={dialogRef}
+            className={`${styles.popupDialog} ${isAddPopup ? styles.addDialog : ''}`}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="task-library-settings-title"
+            aria-labelledby="task-tools-popup-title"
           >
-            <header className={styles.settingsHeader}>
-              <h2 id="task-library-settings-title">Settings</h2>
+            <header className={styles.popupHeader}>
+              <h2 id="task-tools-popup-title">{isAddPopup ? 'Add tasks' : 'Settings'}</h2>
               <button
-                className={styles.settingsCloseButton}
+                className={styles.closeButton}
                 type="button"
-                onClick={() => setIsSettingsOpen(false)}
-                aria-label="Close settings"
+                onClick={() => setActivePopup(null)}
+                aria-label={isAddPopup ? 'Close add tasks' : 'Close settings'}
                 title="Close"
               >
                 <X size={18} aria-hidden="true" />
               </button>
             </header>
-            {renderSettingsContent()}
+            {isAddPopup ? (
+              <div className={styles.addContent}>
+                <TaskForm
+                  onAddTasks={onAddTasks}
+                  projectLookup={projectLookup}
+                  projectSuggestions={projectSuggestions}
+                />
+              </div>
+            ) : renderSettingsContent()}
           </section>
         </div>
       ) : null}

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import TaskTable from '../TaskTable/TaskTable.jsx';
+import IncompleteTasksToggle from '../IncompleteTasksToggle/IncompleteTasksToggle.jsx';
 import { TASK_STATUS, normalizeTaskStatus } from '../../constants/taskStatus.js';
 import { getMondayWeekStartKey } from '../../utils/week.js';
 import styles from './ProjectTasksPage.module.css';
@@ -112,6 +113,8 @@ function ProjectTasksPage({
   projectName,
   projectNumber,
   tasks,
+  showIncompleteOnly,
+  onShowIncompleteOnlyChange,
   isLoaded,
   projectLookup = EMPTY_PROJECT_LOOKUP,
   onBack,
@@ -144,6 +147,12 @@ function ProjectTasksPage({
     projectDraft.projectName.trim().length > 0 &&
     !hasDuplicateProjectNumber;
   const workedWeekStatuses = useMemo(() => getWorkedWeekStatuses(tasks), [tasks]);
+  const displayedTasks = useMemo(
+    () => showIncompleteOnly
+      ? tasks.filter((task) => normalizeTaskStatus(task.status) !== TASK_STATUS.COMPLETE)
+      : tasks,
+    [tasks, showIncompleteOnly],
+  );
   const calendarMonths = useMemo(
     () =>
       Array.from({ length: 12 }, (_item, monthIndex) => ({
@@ -384,8 +393,10 @@ function ProjectTasksPage({
         ) : null}
       </div>
 
+      <IncompleteTasksToggle active={showIncompleteOnly} onChange={onShowIncompleteOnlyChange} />
       <TaskTable
-        tasks={tasks}
+        tasks={displayedTasks}
+        emptyMessage={showIncompleteOnly ? 'No incomplete tasks for this project' : 'No tasks yet'}
         isLoaded={isLoaded}
         groupByProject={false}
         onDeleteTask={onDeleteTask}

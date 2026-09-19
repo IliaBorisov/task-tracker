@@ -3,9 +3,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import KanbanBoard from '../KanbanBoard/KanbanBoard.jsx';
 import ProjectList from '../ProjectList/ProjectList.jsx';
 import ProjectTasksPage from '../ProjectTasksPage/ProjectTasksPage.jsx';
-import TaskLibrary, { TASK_LIBRARY_TABS } from '../TaskLibrary/TaskLibrary.jsx';
+import TaskLibrary from '../TaskLibrary/TaskLibrary.jsx';
 import TaskTable from '../TaskTable/TaskTable.jsx';
-import { normalizeTaskStatus } from '../../constants/taskStatus.js';
+import IncompleteTasksToggle from '../IncompleteTasksToggle/IncompleteTasksToggle.jsx';
+import { TASK_STATUS, normalizeTaskStatus } from '../../constants/taskStatus.js';
 import {
   chooseTaskDatabase,
   chooseProjectFolder,
@@ -610,11 +611,11 @@ function App() {
   const [databasePath, setDatabasePath] = useState('');
   const [databaseError, setDatabaseError] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState(null);
-  const [activeLibraryTab, setActiveLibraryTab] = useState(TASK_LIBRARY_TABS.ADD);
   const [activeTaskView, setActiveTaskView] = useState(getInitialTaskView);
   const [projectSortOrder, setProjectSortOrder] = useState('number-asc');
   const [defaultTaskView, setDefaultTaskView] = useState(getInitialTaskView);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
   const allTasks = useMemo(() => flattenTasksByYear(tasksByYear), [tasksByYear]);
   const activeYearTasks = tasksByYear[activeYear] || [];
   const normalizedProjects = useMemo(() => normalizeProjects(projects), [projects]);
@@ -645,14 +646,23 @@ function App() {
       return searchTokens.every((token) => searchText.includes(token));
     });
   }, [searchTokens, taskViews]);
-  const displayedTasks =
-    activeLibraryTab === TASK_LIBRARY_TABS.SEARCH ? searchResultTasks : taskViews;
+  const displayedTasks = useMemo(
+    () => showIncompleteOnly
+      ? searchResultTasks.filter((task) => normalizeTaskStatus(task.status) !== TASK_STATUS.COMPLETE)
+      : searchResultTasks,
+    [searchResultTasks, showIncompleteOnly],
+  );
   const displayedProjects = useMemo(
     () => filterProjectsForTasks(projectIndex.suggestions, displayedTasks),
     [displayedTasks, projectIndex.suggestions],
   );
-  const isSearching =
-    activeLibraryTab === TASK_LIBRARY_TABS.SEARCH && searchTokens.length > 0;
+  const isSearching = searchTokens.length > 0;
+  const taskEmptyMessage = showIncompleteOnly
+    ? (isSearching ? 'No matching incomplete tasks' : 'No incomplete tasks this year')
+    : (isSearching ? 'No matching tasks' : 'No tasks yet');
+  const projectEmptyMessage = showIncompleteOnly
+    ? (isSearching ? 'No matching projects with incomplete tasks' : 'No projects with incomplete tasks this year')
+    : (isSearching ? 'No matching projects' : 'No projects this year');
   const isKanbanView = activeTaskView === TASK_VIEW.KANBAN;
   const isProjectsView = activeTaskView === TASK_VIEW.PROJECTS;
   const selectedProject = selectedProjectId ? normalizedProjects[selectedProjectId] : null;
@@ -1011,6 +1021,8 @@ function App() {
             folderPath={selectedProjectFolderPath}
             projectId={selectedProjectId}
             tasks={selectedProjectTasks}
+            showIncompleteOnly={showIncompleteOnly}
+            onShowIncompleteOnlyChange={setShowIncompleteOnly}
             isLoaded={isLoaded}
             onBack={() => setSelectedProjectId(null)}
             onDeleteTask={handleDeleteTask}
@@ -1023,21 +1035,6 @@ function App() {
           />
         ) : (
           <div className={styles.taskListView}>
-            <TaskLibrary
-              activeTab={activeLibraryTab}
-              databasePath={databasePath}
-              onActiveTabChange={setActiveLibraryTab}
-              onAddTasks={handleAddTasks}
-              onChooseDatabase={handleChooseDatabase}
-              defaultTaskView={defaultTaskView}
-              onDefaultTaskViewChange={handleDefaultTaskViewChange}
-              projectLookup={projectIndex.lookup}
-              projectSuggestions={projectIndex.suggestions}
-              onSearchQueryChange={setSearchQuery}
-              searchQuery={searchQuery}
-              searchResultCount={searchResultTasks.length}
-              totalTaskCount={activeYearTasks.length}
-            />
             <div
               className={`${styles.taskViewToolbar} ${
                 isKanbanView ? styles.kanbanTaskViewToolbar : styles.tableTaskViewToolbar
@@ -1084,24 +1081,42 @@ function App() {
                   Projects
                 </button>
               </div>
-              <div className={styles.yearSwitcher} aria-label="Task year">
-                <button
-                  type="button"
-                  onClick={handlePreviousYear}
-                  aria-label="Previous year"
-                  title="Previous year"
-                >
-                  <ChevronLeft size={17} aria-hidden="true" />
-                </button>
-                <span>{activeYear}</span>
-                <button
-                  type="button"
-                  onClick={handleNextYear}
-                  aria-label="Next year"
-                  title="Next year"
-                >
-                  <ChevronRight size={17} aria-hidden="true" />
-                </button>
+              <div className={styles.searchTools}>
+                <TaskLibrary
+                  databasePath={databasePath}
+                  onAddTasks={handleAddTasks}
+                  onChooseDatabase={handleChooseDatabase}
+                  defaultTaskView={defaultTaskView}
+                  onDefaultTaskViewChange={handleDefaultTaskViewChange}
+                  projectLookup={projectIndex.lookup}
+                  projectSuggestions={projectIndex.suggestions}
+                  onSearchQueryChange={setSearchQuery}
+                  searchQuery={searchQuery}
+                  searchResultCount={displayedTasks.length}
+                  totalTaskCount={activeYearTasks.length}
+                />
+              </div>
+              <div className={styles.taskViewActions}>
+                <IncompleteTasksToggle active={showIncompleteOnly} onChange={setShowIncompleteOnly} />
+                <div className={styles.yearSwitcher} aria-label="Task year">
+                  <button
+                    type="button"
+                    onClick={handlePreviousYear}
+                    aria-label="Previous year"
+                    title="Previous year"
+                  >
+                    <ChevronLeft size={17} aria-hidden="true" />
+                  </button>
+                  <span>{activeYear}</span>
+                  <button
+                    type="button"
+                    onClick={handleNextYear}
+                    aria-label="Next year"
+                    title="Next year"
+                  >
+                    <ChevronRight size={17} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
             </div>
             <div className={styles.taskViewContent}>
@@ -1112,7 +1127,7 @@ function App() {
                   isLoaded={isLoaded}
                   sortOrder={projectSortOrder}
                   onSortOrderChange={setProjectSortOrder}
-                  emptyMessage={isSearching ? 'No matching projects' : 'No projects this year'}
+                  emptyMessage={projectEmptyMessage}
                   onOpenProject={setSelectedProjectId}
                   onOpenProjectFolder={handleOpenProjectFolder}
                   onDeleteTask={handleDeleteTask}
@@ -1123,7 +1138,7 @@ function App() {
                 <KanbanBoard
                   tasks={displayedTasks}
                   isLoaded={isLoaded}
-                  emptyMessage={isSearching ? 'No matching tasks' : 'No tasks yet'}
+                  emptyMessage={taskEmptyMessage}
                   onOpenProject={setSelectedProjectId}
                   onOpenProjectFolder={handleOpenProjectFolder}
                   onDeleteTask={handleDeleteTask}
@@ -1137,7 +1152,7 @@ function App() {
                   isLoaded={isLoaded}
                   groupByProject
                   onReorderProject={isSearching ? undefined : handleReorderProject}
-                  emptyMessage={isSearching ? 'No matching tasks' : 'No tasks yet'}
+                  emptyMessage={taskEmptyMessage}
                   onOpenProject={setSelectedProjectId}
                   onOpenProjectFolder={handleOpenProjectFolder}
                   onDeleteTask={handleDeleteTask}
